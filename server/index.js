@@ -23,11 +23,11 @@ const PUBLIC = path.join(__dirname, '..');
 store.load();
 store.seedDemoTenants();
 
-/* 真实数据源（启动拉取一次，缓存；可用 /api/refresh-sources 热更新） */
+/* 真实数据源（启动用演示投影；可用 /api/refresh-sources 热更新为真实聚合） */
 let LIVE_META = {configured: [], raws: 0, meta: []};
-async function loadSources(){
+async function loadSources({tenderLive=false}={}){
   try{
-    const {raws, meta, configured} = await sources.loadLive();
+    const {raws, meta, configured} = await sources.loadLive({tenderLive});
     engine.setLiveRaw(raws);
     LIVE_META = {configured, raws: raws.length, meta};
     console.log('[sources] 实时数据源加载完成: ' + (configured.length? configured.map(c=>c.id+'('+c.st+')').join(', ') : '无（未配置 key，使用演示数据）') + '，注入 '+raws.length+' 条 RAW');
@@ -147,7 +147,8 @@ const server = http.createServer(async (req, res)=>{
 
     /* ===== 热刷新实时数据源（需登录） ===== */
     if(pathname === '/api/refresh-sources' && method === 'POST'){
-      await loadSources();
+      // 刷新时启用真实聚合：招投标(公开免费)默认真实；其他源按 .env key 决定
+      await loadSources({tenderLive: process.env.TENDER_LIVE !== '0'});
       return send(res, 200, LIVE_META);
     }
 

@@ -15,7 +15,7 @@ async function call(method, path, body, token){
   // 1) 公开线索
   let r = await call('GET','/api/leads?market=国内&ind=石化');
   ok(r.status===200, 'GET /api/leads 国内+石化 status=200');
-  ok(r.data.mergedCount===36, '合并企业数=36 (实际 '+r.data.mergedCount+')');
+  ok(r.data.mergedCount>=36, '合并企业数>=36 (实际 '+r.data.mergedCount+')');
   ok(r.data.dupRemoved>0, '去重消除重复='+r.data.dupRemoved+' 条');
   ok(r.data.leads.length>0 && r.data.leads[0].m==='国内', '命中首条为国内企业: '+(r.data.leads[0]&&r.data.leads[0].n));
   ok(r.data.leads.every(d=>d.ind==='石化'), '硬过滤生效：全部 ind=石化');

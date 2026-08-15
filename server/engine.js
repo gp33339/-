@@ -206,7 +206,11 @@ function scoreLeads(icp, srcOn){
     let cm = 0;
     (p.cert || []).forEach(x => { if(d.cert.includes(x)){ cm++; why.push('认证✓'+x); } });
     score += cm * 10;
-    (p.sig || []).forEach(x => { if(d.sig.includes(x)){ score += (SIG_W[x]||0); why.push('信号✓'+x); } });
+    // 信号基线加权：任何信号都代表采购意图，先计入基础分；ICP 命中的信号再额外加权。
+    // （修复：此前仅当用户在 ICP 勾选该信号才加分，导致真实单源招投标线索被埋没。）
+    const sigSet = new Set(d.sig || []);
+    sigSet.forEach(x => { score += (SIG_W[x]||0); why.push('信号✓'+x); });
+    if(p.sig){ p.sig.forEach(x => { if(sigSet.has(x)){ score += 10; why.push('ICP信号✓'+x); } }); }
     score += d.crossBonus;
     if(d.crossBonus) why.push(d.srcs.length + '源交叉+' + d.crossBonus);
     out.push(Object.assign({}, d, {score, why}));

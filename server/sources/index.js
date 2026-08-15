@@ -24,13 +24,16 @@ function configured(){
   if(process.env.HUNTER_API_KEY) list.push({id:'hunter', st: process.env.HUNTER_API_KEY==='test-api-key' ? '测试key' : '真实'});
   // 海关：有 key 为真实；无 key 默认跑内置演示样本（默认演示，让用户立即看到最强信号）
   list.push({id:'customs', st: process.env.CUSTOMS_API_KEY ? '真实' : '演示'});
-  // 招投标：公开免费数据，默认演示样本（带采购人电话）；TENDER_LIVE=1 启用真实聚合
-  // 注意：引擎 SOURCES 中招投标源 id 为 'bid'，此处须保持一致以便前端透出状态
-  list.push({id:'bid', st: process.env.TENDER_LIVE ? '真实' : '演示'});
+  // 招投标：公开免费数据，默认在"刷新数据源"时启用真实聚合（带采购人电话）；
+  // 设 TENDER_LIVE=0 可强制回退演示样本。引擎 SOURCES 中源 id 为 'bid'，须保持一致。
+  list.push({id:'bid', st: process.env.TENDER_LIVE === '0' ? '演示' : '真实(公开免费)'});
   return list;
 }
 
-async function loadLive({industries=[], regions=[]}={}){
+async function loadLive({industries=[], regions=[], tenderLive}={}){
+  // 招投标为公开免费数据，默认在"刷新数据源"时启用真实聚合；
+  // 设 TENDER_LIVE=0 可强制回退演示样本（不联网）。
+  if(tenderLive === undefined) tenderLive = (process.env.TENDER_LIVE !== '0');
   const raws = [];
   const meta = [];
   const cfg = configured();
@@ -75,7 +78,7 @@ async function loadLive({industries=[], regions=[]}={}){
   const tenderCfg = cfg.find(c=>c.id==='bid');
   if(tenderCfg){
     try{
-      const r = await tender.fetchRaw({ industries, regions, live: !!process.env.TENDER_LIVE });
+      const r = await tender.fetchRaw({ industries, regions, live: tenderLive });
       raws.push(...r);
       meta.push({id:'bid', st:tenderCfg.st, companies:r.length});
     }catch(e){ meta.push({id:'bid', st:'错误', error:String(e.message)}); }

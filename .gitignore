@@ -5,3 +5,5 @@ node_modules/
 # 真实数据源密钥（含 key 的 .env 禁止入库）
 server/.env
 .env
+# 本地临时探测/调试目录（非源码）
+.probe/
