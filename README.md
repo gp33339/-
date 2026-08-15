@@ -42,17 +42,39 @@ node server/index.js            # 默认端口 8787，可用 PORT=xxxx 覆盖
 # 浏览器打开 http://localhost:8787
 ```
 
-- `server/engine.js` — 精准引擎（多源聚合去重 + ICP 评分），纯函数
+- `server/engine.js` — 精准引擎（多源聚合去重 + ICP 评分），纯函数；`setLiveRaw()` 注入真实数据
 - `server/store.js` — JSON 存储层，所有读写按 `tenant_id` 过滤（生产替换为 SQLite/Postgres，接口不变）
 - `server/jwt.js` — 极简 HS256 JWT（内置 crypto，无依赖）
-- `server/index.js` — 路由：注册/登录、`/api/leads`（公开）、收藏/ICP/联系（受保护）
+- `server/index.js` — 路由：注册/登录、`/api/leads`（公开，带 live 实时源状态）、收藏/ICP/联系（受保护）、`/api/refresh-sources`（热刷新）
+- `server/sources/` — **真实数据源适配器**：`qcc.js`（企查查）、`hunter.js`（Hunter 海外公司+邮箱）、`index.js`（编排器，读 env 开关）、`http.js`（带超时 HTTP）
 - `server/test_api.js` — 端到端测试：`node server/test_api.js`（需先启动服务），验证注册→登录→收藏→**跨租户隔离**→401 拦截，当前 19/19 通过
+- `server/test_sources.js` — 数据源接入验证：`node server/test_sources.js`，单测（QCC 签名 / 打标 / Hunter 映射）+ **实测 Hunter 公开测试 key 真打 API → RAW → 引擎**，当前 15/15 通过
 
 > 演示账号在后端启动时自动 seed；`server/data.json` 为运行时数据（已 gitignore）。
 
+## 接入真实数据源（v4 已落地）
+
+不填任何 key 时引擎自动回退到内置演示数据（36 家样本投影）。给 key 即启用真实源、默认开启并参与聚合：
+
+```bash
+cp server/.env.example server/.env      # 编辑填入 key（.env 已 gitignore，不会入库）
+# 示例：用 Hunter 公开测试 key 零成本验证整条链路（返回示例数据，不耗额度）
+echo 'HUNTER_API_KEY=test-api-key' > server/.env
+node server/index.js                     # 启动即拉取实时源并注入引擎
+# 浏览器打开 http://localhost:8787 → 国外市场即可看到实时客户（带邮箱）
+```
+
+| 源 | 适配器 | 状态 | 说明 |
+|---|---|---|---|
+| 企查查（国内工商） | `server/sources/qcc.js` | 已实现（待填 key） | `FuzzySearch` + MD5 签名；返回公司名/法人/信用代码/地区，联系方式需白名单，留待 enrich 补全 |
+| Hunter（海外公司+邮箱） | `server/sources/hunter.js` | **已实测打通** | `v2/discover` 按行业/国家搜公司 + `v2/domain-search` 补全邮箱；填 `test-api-key` 即跑通 |
+| 海关 / LinkedIn / 招投标 / 国际站 | — | 待接（契约见设计文档 8.1） | 复用 `server/sources/` 适配器形态，实现 `fetchRaw→RAW` 即可，引擎/去重/评分/多租户零改动 |
+
+热刷新：`POST /api/refresh-sources`（需登录）重新拉取实时源，无需重启。
+
 ## 下一步
 
-把真实数据源（企查查 / 海关 / LinkedIn）按 `对外获客软件产品设计.md` 第 8.1 节的适配器契约接入 `server/engine.js` 的 `RAW` 产出即可上真实数据 —— 聚合 / 去重 / 评分 / 多租户逻辑全部复用，无需改动。
+按设计文档第 8.1 节的落地顺序（招投标 → 企查查 → 海关 → 邮箱补全 → LinkedIn）继续补齐剩余适配器；替换 `server/store.js` 为真实数据库并加固密码强度 / 限流。
 
 ## 合规
 

@@ -14,6 +14,7 @@ const url = require('url');
 const store = require('./store');
 const jwt = require('./jwt');
 const engine = require('./engine');
+const sources = require('./sources');
 
 const PORT = process.env.PORT || 8787;
 const MVP_DIR = path.join(__dirname, '..', 'mvp');
@@ -21,6 +22,19 @@ const PUBLIC = path.join(__dirname, '..');
 
 store.load();
 store.seedDemoTenants();
+
+/* 真实数据源（启动拉取一次，缓存；可用 /api/refresh-sources 热更新） */
+let LIVE_META = {configured: [], raws: 0, meta: []};
+async function loadSources(){
+  try{
+    const {raws, meta, configured} = await sources.loadLive();
+    engine.setLiveRaw(raws);
+    LIVE_META = {configured, raws: raws.length, meta};
+    console.log('[sources] 实时数据源加载完成: ' + (configured.length? configured.map(c=>c.id+'('+c.st+')').join(', ') : '无（未配置 key，使用演示数据）') + '，注入 '+raws.length+' 条 RAW');
+  }catch(e){
+    console.warn('[sources] 加载失败，回退演示数据:', e.message);
+  }
+}
 
 /* ---------- 工具 ---------- */
 function send(res, code, obj){
@@ -116,13 +130,25 @@ const server = http.createServer(async (req, res)=>{
         sig: qlist(q,'sig')
       };
       const srcOn = Object.assign({}, engine.SRC_ON_DEFAULT);
+      // 已配置的真实源默认开启（让用户立即看到实时数据）
+      LIVE_META.configured.forEach(c => { if(srcOn[c.id] !== undefined) srcOn[c.id] = true; });
       Object.keys(srcOn).forEach(k=>{ if(q['src_'+k]==='0') srcOn[k]=false; if(q['src_'+k]==='1') srcOn[k]=true; });
       const r = engine.scoreLeads(icp, srcOn);
+      // 反映实时源状态（覆盖静态 st）
+      const stMap = {};
+      LIVE_META.configured.forEach(c => stMap[c.id] = c.st);
       return send(res, 200, {
-        sources: engine.SOURCES.map(s=>({id:s.id, nm:s.nm, mkt:s.mkt, st:s.st, on:!!srcOn[s.id]})),
+        sources: engine.SOURCES.map(s=>({id:s.id, nm:s.nm, mkt:s.mkt, st: stMap[s.id] || s.st, on:!!srcOn[s.id], live: !!stMap[s.id]})),
+        live: LIVE_META,
         rawCount: r.rawCount, mergedCount: r.mergedCount, dupRemoved: r.dupRemoved,
         leads: r.leads
       });
+    }
+
+    /* ===== 热刷新实时数据源（需登录） ===== */
+    if(pathname === '/api/refresh-sources' && method === 'POST'){
+      await loadSources();
+      return send(res, 200, LIVE_META);
     }
 
     /* ===== 收藏 ===== */
@@ -187,4 +213,5 @@ function verifyLocal(email, pwd){
 server.listen(PORT, ()=>{
   console.log('靶心 SaaS 后端已启动: http://localhost:' + PORT);
   console.log('演示账号: demo@valve-cn.com / demo@valve-ex.com  密码 123456');
+  loadSources();
 });

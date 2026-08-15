@@ -2,3 +2,6 @@
 .workbuddy/
 server/data.json
 node_modules/
+# 真实数据源密钥（含 key 的 .env 禁止入库）
+server/.env
+.env

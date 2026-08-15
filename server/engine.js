@@ -1,29 +1,40 @@
 'use strict';
 /* =========================================================================
  * 靶心 · 精准引擎（服务端版，纯函数，无 DOM）
- * 移植自 mvp/index.html 的原型引擎：
- *   SEED(真值) → 各数据源"部分字段原始记录" → 归一化 key → 合并去重
- *   → 字段互补 → 多源交叉验证加置信 → ICP 硬过滤 + 加权评分
- * 真实接入企查查/海关/LinkedIn 时，只需让 RAW 由对应适配器产出，
- *   aggregate / 评分逻辑完全不变。
+ *
+ * 设计要点（v4 接入真实数据源）：
+ *   - SEED(演示真值) 仅用于"在无真实数据时"生成可演示的多源投影 RAW。
+ *   - 真实数据源（企查查/Hunter…）由 server/sources/* 适配器产出 RAW，
+ *     通过 engine.setLiveRaw() 注入；aggregate 把 seed RAW 与 live RAW 合并。
+ *   - aggregate 不依赖 _truthKey：真实记录自带 m(市场)/act，缺失时按源推断，
+ *     因此同一套"归一化去重 + 字段互补 + 多源交叉验证 + 评分"逻辑对真假数据通用。
+ *
+ * RAW 记录形态（项目/适配器都遵守）：
+ *   { src, rawName, m?, ind?, rg?, sz?, role?, cert?:[], sig?:[], ct?:{}, act?, meta? }
+ *   - m: '国内' | '国外'（可选，缺失则按源推断）
+ *   - ct: { phone, email, im, imType, name, title }（字段可选，跨源互补）
  * ========================================================================= */
 
 const SOURCES = [
-  {id:'qcc',      nm:'企查查（国内工商）',    mkt:'国内', st:'模拟', on:true},
-  {id:'bid',      nm:'招投标/Tender 库',      mkt:'双',   st:'模拟', on:true},
-  {id:'map',      nm:'地图 LBS（本地周边）',  mkt:'国内', st:'模拟', on:true},
-  {id:'web',      nm:'官网/GEO 内容线索',     mkt:'双',   st:'模拟', on:true},
-  {id:'news',     nm:'资讯监测（扩产/投产）', mkt:'双',   st:'模拟', on:true},
-  {id:'gdb',      nm:'全球企业库（国外工商）',mkt:'国外', st:'模拟', on:true},
-  {id:'customs',  nm:'海关进口数据',          mkt:'国外', st:'模拟', on:true},
-  {id:'linkedin', nm:'LinkedIn 决策人',       mkt:'国外', st:'模拟', on:true},
-  {id:'alibaba',  nm:'国际站/MIC（RFQ）',     mkt:'国外', st:'模拟', on:true},
-  {id:'enrich',   nm:'联系方式补全服务',      mkt:'双',   st:'增值', on:false}
+  {id:'qcc',      nm:'企查查（国内工商）',     mkt:'国内', st:'模拟',   on:true},
+  {id:'bid',      nm:'招投标/Tender 库',       mkt:'双',   st:'模拟',   on:true},
+  {id:'map',      nm:'地图 LBS（本地周边）',   mkt:'国内', st:'模拟',   on:true},
+  {id:'web',      nm:'官网/GEO 内容线索',      mkt:'双',   st:'模拟',   on:true},
+  {id:'news',     nm:'资讯监测（扩产/投产）',   mkt:'双',   st:'模拟',   on:true},
+  {id:'gdb',      nm:'全球企业库（国外工商）', mkt:'国外', st:'模拟',   on:true},
+  {id:'customs',  nm:'海关进口数据',           mkt:'国外', st:'模拟',   on:true},
+  {id:'linkedin', nm:'LinkedIn 决策人',        mkt:'国外', st:'模拟',   on:true},
+  {id:'alibaba',  nm:'国际站/MIC（RFQ）',      mkt:'国外', st:'模拟',   on:true},
+  {id:'hunter',   nm:'Hunter（海外公司+邮箱）',mkt:'国外', st:'待配置', on:false},
+  {id:'enrich',   nm:'联系方式补全服务',       mkt:'双',   st:'增值',   on:false}
 ];
 const SRC_ON_DEFAULT = {};
 SOURCES.forEach(s => SRC_ON_DEFAULT[s.id] = s.on);
 
-/* SEED：客户真值库（仅供各源投影，引擎看不到全貌） */
+/* 国内源集合：记录未带 m 时按源推断市场 */
+const DOMESTIC_SRCS = new Set(['qcc','bid','map','web','news']);
+
+/* SEED：演示真值库（仅用于生成可演示的多源投影） */
 const SEED = [
  {m:"国内",n:"中石化某工程公司",ind:"石化",rg:"华东",sz:"大型",role:"采购部",cert:["API 6D","TS","ISO 9001"],sig:["招标","扩产"],ct:{name:"张工",title:"采购经理",phone:"138****1201",im:"微信:zhang_valve",imType:"wechat"},act:"投招标跟进 + 发选型手册"},
  {m:"国内",n:"浙江某阀门经销商",ind:"石化",rg:"华东",sz:"中型",role:"经销商",cert:["TS","ISO 9001"],sig:["RFQ"],ct:{name:"王总",title:"总经理",phone:"138****2202",im:"微信:wang_valve",imType:"wechat"},act:"经销商政策 + 样品寄送"},
@@ -78,7 +89,7 @@ function variant(name, src){
   }
 }
 function project(seed, src){
-  const r = {src, rawName:variant(seed.n, src), _truthKey:seed.n};
+  const r = {src, rawName:variant(seed.n, src), _truthKey:seed.n, m:seed.m};
   const c = seed.ct;
   switch(src){
     case 'qcc':      Object.assign(r,{ind:seed.ind,rg:seed.rg,sz:seed.sz,cert:seed.cert.slice(0,1),
@@ -106,8 +117,13 @@ function sourcesOf(seed){
   seed.sig.forEach(g => { if(SIG_SRC[g]) s.add(SIG_SRC[g]); });
   return [...s];
 }
-const RAW = [];
-SEED.forEach(seed => sourcesOf(seed).forEach(src => RAW.push(project(seed, src))));
+const SEED_RAW = [];
+SEED.forEach(seed => sourcesOf(seed).forEach(src => SEED_RAW.push(project(seed, src))));
+
+/* live RAW（真实数据源注入，默认空） */
+let LIVE_RAW = [];
+function setLiveRaw(arr){ LIVE_RAW = Array.isArray(arr) ? arr : []; }
+function allRaw(){ return SEED_RAW.concat(LIVE_RAW); }
 
 function normKey(name){
   return String(name).toLowerCase()
@@ -120,7 +136,7 @@ function normKey(name){
 function uniq(a){ return [...new Set(a)]; }
 
 function aggregate(srcOn){
-  const enabled = RAW.filter(r => srcOn[r.src]);
+  const enabled = allRaw().filter(r => srcOn[r.src]);
   const map = new Map();
   enabled.forEach(r => {
     const k = normKey(r.rawName);
@@ -134,21 +150,36 @@ function aggregate(srcOn){
     if(r.cert) t.cert = uniq(t.cert.concat(r.cert));
     if(r.sig)  t.sig  = uniq(t.sig.concat(r.sig));
     if(r.ct) Object.keys(r.ct).forEach(f => { if(!t.ct[f] && r.ct[f]) t.ct[f] = r.ct[f]; });
-    const seed = SEED.find(s => s.n === r._truthKey);
-    t.m = seed.m; t.act = seed.act; t.truth = seed.n;
+    if(r.m) t.m = r.m;                                   // 记录自带市场优先
+    if(r.act && !t.act) t.act = r.act;
+    if(r.meta) (t.meta = t.meta || {}).src = r.src;
   });
 
   const list = [...map.values()].map(t => {
     t.srcs = uniq(t.srcs);
     t.n = t.names.slice().sort((a,b)=>a.length-b.length)[0];
+
+    // 市场：记录自带 → 种子真值 → 按源推断
+    if(!t.m){
+      const seed = SEED.find(s => s.n === t.key || t.names.includes(s.n));
+      if(seed) t.m = seed.m;
+      else t.m = t.srcs.some(s => DOMESTIC_SRCS.has(s)) ? '国内' : '国外';
+    }
+    if(!t.act){
+      const seed = SEED.find(s => s.n === t.key || t.names.includes(s.n));
+      t.act = seed ? seed.act : '实时数据源，建议人工核验后触达';
+    }
+
     t.enriched = [];
     if(srcOn.enrich){
-      const seed = SEED.find(s => s.n === t.truth);
-      ['phone','email','im','name','title'].forEach(f=>{
-        if(!t.ct[f] && seed.ct[f]){ t.ct[f] = seed.ct[f]; t.enriched.push(f); }
-      });
-      if(t.enriched.includes('im') && !t.ct.imType) t.ct.imType = seed.ct.imType;
-      if(!t.role) t.role = seed.role;
+      const seed = SEED.find(s => s.n === t.key || t.names.includes(s.n));
+      if(seed){
+        ['phone','email','im','name','title'].forEach(f=>{
+          if(!t.ct[f] && seed.ct[f]){ t.ct[f] = seed.ct[f]; t.enriched.push(f); }
+        });
+        if(t.enriched.includes('im') && !t.ct.imType) t.ct.imType = seed.ct.imType;
+        if(!t.role) t.role = seed.role;
+      }
     }
     const k = t.srcs.length;
     t.conf = k>=4 ? 96 : k===3 ? 90 : k===2 ? 78 : 62;
@@ -184,4 +215,5 @@ function scoreLeads(icp, srcOn){
   return {rawCount, mergedCount: merged.length, dupRemoved: rawCount - merged.length, leads: out};
 }
 
-module.exports = {SOURCES, SRC_ON_DEFAULT, SEED, scoreLeads, normKey, aggregate};
+module.exports = {SOURCES, SRC_ON_DEFAULT, SEED, scoreLeads, normKey, aggregate,
+                  setLiveRaw, allRaw, SEED_RAW};
