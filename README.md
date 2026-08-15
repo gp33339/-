@@ -46,7 +46,7 @@ node server/index.js            # 默认端口 8787，可用 PORT=xxxx 覆盖
 - `server/store.js` — JSON 存储层，所有读写按 `tenant_id` 过滤（生产替换为 SQLite/Postgres，接口不变）
 - `server/jwt.js` — 极简 HS256 JWT（内置 crypto，无依赖）
 - `server/index.js` — 路由：注册/登录、`/api/leads`（公开，带 live 实时源状态）、收藏/ICP/联系（受保护）、`/api/refresh-sources`（热刷新）
-- `server/sources/` — **真实数据源适配器**：`qcc.js`（企查查）、`hunter.js`（Hunter 海外公司+邮箱）、`index.js`（编排器，读 env 开关）、`http.js`（带超时 HTTP）
+- `server/sources/` — **真实数据源适配器**：`qcc.js`（企查查）、`hunter.js`（Hunter 海外公司+邮箱）、`customs.js`（海关进口数据）、`tender.js`（招投标公告·国内免费带电话）、`index.js`（编排器，读 env 开关）、`http.js`（带超时 HTTP）
 - `server/test_api.js` — 端到端测试：`node server/test_api.js`（需先启动服务），验证注册→登录→收藏→**跨租户隔离**→401 拦截，当前 19/19 通过
 - `server/test_sources.js` — 数据源接入验证：`node server/test_sources.js`，单测（QCC 签名 / 打标 / Hunter 映射 / 海关 HS 查询）+ **实测 Hunter 公开测试 key 真打 API + 海关演示样本真跑引擎评分**，当前 24/24 通过
 
@@ -69,7 +69,8 @@ node server/index.js                     # 启动即拉取实时源并注入引�
 | 企查查（国内工商） | `server/sources/qcc.js` | 已实现（待填 key） | `FuzzySearch` + MD5 签名；返回公司名/法人/信用代码/地区，联系方式需白名单，留待 enrich 补全 |
 | Hunter（海外公司+邮箱） | `server/sources/hunter.js` | **已实测打通** | `v2/discover` 按行业/国家搜公司 + `v2/domain-search` 补全邮箱；填 `test-api-key` 即跑通 |
 | 海关进口数据（阀门外贸最强信号） | `server/sources/customs.js` | **已实现（演示态默认生效）** | 腾道 API（Bearer/OAuth2）+ 阀门 HS 8481；无 key 跑内置进口商样本，填 `CUSTOMS_API_KEY` 即换真实提单 |
-| LinkedIn / 招投标 / 国际站 / 全球企业库 | — | 待接（契约见设计文档 8.1） | 复用 `server/sources/` 适配器形态，实现 `fetchRaw→RAW` 即可，引擎/去重/评分/多租户零改动 |
+| **招投标公告（国内免费·直接带电话）** | `server/sources/tender.js` | **已实现（演示态默认生效）** | 聚合中国政府采购网/公共资源交易中心的公开招标；公告自带采购人+联系人+电话+邮箱。**零成本、且解决企查查 886 不返电话的痛点**；设 `TENDER_LIVE=1` 启用真实聚合（须守 robots/低频） |
+| LinkedIn / 国际站 / 全球企业库 | — | 待接（契约见设计文档 8.1） | 复用 `server/sources/` 适配器形态，实现 `fetchRaw→RAW` 即可，引擎/去重/评分/多租户零改动 |
 
 热刷新：`POST /api/refresh-sources`（需登录）重新拉取实时源，无需重启。
 

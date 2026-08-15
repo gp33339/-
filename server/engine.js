@@ -74,8 +74,8 @@ const SEED = [
  {m:"国外",n:"US Metal OEM",ind:"冶金",rg:"美国",sz:"中型",role:"OEM",cert:["API 600","ISO 9001"],sig:["官网需求"],ct:{name:"Tom Ray",title:"Sourcing",email:"tom@metal-oem.us",im:"linkedin.com/in/tomray",imType:"linkedin"},act:"冶金 OEM 配套"}
 ];
 
-const SIG_SRC = {"招标":"bid","海关进口":"customs","扩产":"news","职位变动":"linkedin","RFQ":"alibaba","官网需求":"web"};
-const SIG_W   = {"招标":25,"海关进口":25,"扩产":15,"职位变动":15,"RFQ":12,"官网需求":12};
+const SIG_SRC = {"招标":"bid","招标采购":"bid","海关进口":"customs","扩产":"news","职位变动":"linkedin","RFQ":"alibaba","官网需求":"web"};
+const SIG_W   = {"招标":25,"招标采购":25,"海关进口":25,"扩产":15,"职位变动":15,"RFQ":12,"官网需求":12};
 
 function variant(name, src){
   switch(src){

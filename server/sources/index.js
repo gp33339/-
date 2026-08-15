@@ -11,10 +11,12 @@
  *   ENRICH_EMAILS=1           真 key 下对 discover 命中的公司再补全邮箱（耗额度）
  *   CUSTOMS_API_KEY          海关数据 API（腾道等）；留空则使用内置阀门进口商演示样本
  *   CUSTOMS_API_BASE         海关 API 基址（签合同后填真实 endpoint）
+ *   TENDER_LIVE=1            启用招投标真实聚合（默认演示样本；公开数据须守 robots/低频）
  * ========================================================================= */
 const qcc = require('./qcc');
 const hunter = require('./hunter');
 const customs = require('./customs');
+const tender = require('./tender');
 
 function configured(){
   const list = [];
@@ -22,6 +24,9 @@ function configured(){
   if(process.env.HUNTER_API_KEY) list.push({id:'hunter', st: process.env.HUNTER_API_KEY==='test-api-key' ? '测试key' : '真实'});
   // 海关：有 key 为真实；无 key 默认跑内置演示样本（默认演示，让用户立即看到最强信号）
   list.push({id:'customs', st: process.env.CUSTOMS_API_KEY ? '真实' : '演示'});
+  // 招投标：公开免费数据，默认演示样本（带采购人电话）；TENDER_LIVE=1 启用真实聚合
+  // 注意：引擎 SOURCES 中招投标源 id 为 'bid'，此处须保持一致以便前端透出状态
+  list.push({id:'bid', st: process.env.TENDER_LIVE ? '真实' : '演示'});
   return list;
 }
 
@@ -65,6 +70,15 @@ async function loadLive({industries=[], regions=[]}={}){
       raws.push(...r);
       meta.push({id:'customs', st:customsCfg.st, companies:r.length});
     }catch(e){ meta.push({id:'customs', st:'错误', error:String(e.message)}); }
+  }
+
+  const tenderCfg = cfg.find(c=>c.id==='bid');
+  if(tenderCfg){
+    try{
+      const r = await tender.fetchRaw({ industries, regions, live: !!process.env.TENDER_LIVE });
+      raws.push(...r);
+      meta.push({id:'bid', st:tenderCfg.st, companies:r.length});
+    }catch(e){ meta.push({id:'bid', st:'错误', error:String(e.message)}); }
   }
 
   return {raws, meta, configured: cfg};
