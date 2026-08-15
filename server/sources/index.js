@@ -9,14 +9,19 @@
  *   QCC_APPKEY / QCC_SECRET   企查查开放平台
  *   HUNTER_API_KEY            Hunter.io（填 'test-api-key' 可零成本验证链路）
  *   ENRICH_EMAILS=1           真 key 下对 discover 命中的公司再补全邮箱（耗额度）
+ *   CUSTOMS_API_KEY          海关数据 API（腾道等）；留空则使用内置阀门进口商演示样本
+ *   CUSTOMS_API_BASE         海关 API 基址（签合同后填真实 endpoint）
  * ========================================================================= */
 const qcc = require('./qcc');
 const hunter = require('./hunter');
+const customs = require('./customs');
 
 function configured(){
   const list = [];
   if(process.env.QCC_APPKEY && process.env.QCC_SECRET) list.push({id:'qcc', st:'真实'});
   if(process.env.HUNTER_API_KEY) list.push({id:'hunter', st: process.env.HUNTER_API_KEY==='test-api-key' ? '测试key' : '真实'});
+  // 海关：有 key 为真实；无 key 默认跑内置演示样本（默认演示，让用户立即看到最强信号）
+  list.push({id:'customs', st: process.env.CUSTOMS_API_KEY ? '真实' : '演示'});
   return list;
 }
 
@@ -46,6 +51,20 @@ async function loadLive({industries=[], regions=[]}={}){
       raws.push(...r);
       meta.push({id:'hunter', st:hunterCfg.st, companies:r.length});
     }catch(e){ meta.push({id:'hunter', st:'错误', error:String(e.message)}); }
+  }
+
+  const customsCfg = cfg.find(c=>c.id==='customs');
+  if(customsCfg){
+    try{
+      const r = await customs.fetchRaw({
+        apiKey: process.env.CUSTOMS_API_KEY,
+        apiBase: process.env.CUSTOMS_API_BASE,
+        industries, regions,
+        demo: !process.env.CUSTOMS_API_KEY
+      });
+      raws.push(...r);
+      meta.push({id:'customs', st:customsCfg.st, companies:r.length});
+    }catch(e){ meta.push({id:'customs', st:'错误', error:String(e.message)}); }
   }
 
   return {raws, meta, configured: cfg};
