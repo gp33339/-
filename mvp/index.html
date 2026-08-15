@@ -384,28 +384,66 @@ function aggregate(){
 
 /* ---------------- 多租户状态 ---------------- */
 const LS = 'bx3:';
+let TOKEN = localStorage.getItem(LS+'token') || null;   // 后端 JWT：存在即走真实多租户
+let API_MODE = !!TOKEN;
+let OFFLINE = false;
 let TENANT = null;   // {id,email,name,market}
 let ST = {favs:[], icps:[], contacted:{}};
 
-function tkey(f){ return LS + 't:' + TENANT.id + ':' + f; }
-function loadState(){
+/* 后端 API（同域）。TOKEN 缺失或请求失败 → 自动回退本地样本 */
+async function api(method, path, body){
+  const opt = {method, headers:{}};
+  if(TOKEN) opt.headers['Authorization'] = 'Bearer ' + TOKEN;
+  if(body !== undefined){ opt.headers['Content-Type'] = 'application/json'; opt.body = JSON.stringify(body); }
+  const r = await fetch(path, opt);
+  const data = await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(data.error || ('HTTP '+r.status));
+  return data;
+}
+function tkey(f){ return LS + 't:' + (TENANT && TENANT.id) + ':' + f; }
+async function loadState(){
+  if(API_MODE){
+    try{
+      const [f,i,c] = await Promise.all([api('GET','/api/favorites'), api('GET','/api/icps'), api('GET','/api/contacts')]);
+      ST.favs = f.favs || []; ST.icps = i.icps || []; ST.contacted = c.contacts || {};
+      OFFLINE = false; return;
+    }catch(e){ API_MODE = false; OFFLINE = true; }
+  }
   ST.favs      = JSON.parse(localStorage.getItem(tkey('favs'))||'[]');
   ST.icps      = JSON.parse(localStorage.getItem(tkey('icps'))||'[]');
   ST.contacted = JSON.parse(localStorage.getItem(tkey('contacted'))||'{}');
 }
-function save(f){ localStorage.setItem(tkey(f), JSON.stringify(ST[f])); }
+function saveLocal(f){ localStorage.setItem(tkey(f), JSON.stringify(ST[f])); }
 
 const PRESET = {
   'demo@valve-cn.com': {name:'浙江精工阀门 · 国内销售团队', market:'国内'},
   'demo@valve-ex.com': {name:'宁波阀门出口部 · 外贸团队',   market:'国外'}
 };
 function tenants(){ return JSON.parse(localStorage.getItem(LS+'tenants')||'{}'); }
-function doLogin(email, pwd){
+async function doLogin(email, pwd){
   email = (email||'').trim().toLowerCase();
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return '请输入正确的邮箱账号';
   if(!pwd) return '请输入密码';
+  if(PRESET[email] && pwd !== '123456') return '演示账号密码为 123456';
+  // 优先走后端（真实多租户 + tenant_id 行级隔离）
+  try{
+    let res;
+    try{ res = await api('POST','/api/login',{email, password:pwd}); }
+    catch(e){
+      if(String(e.message).includes('不存在')) res = await api('POST','/api/register',{email, password:pwd});
+      else throw e;
+    }
+    TOKEN = res.token; localStorage.setItem(LS+'token', TOKEN); API_MODE = true; OFFLINE = false;
+    TENANT = res.tenant;
+    return null;
+  }catch(e){
+    OFFLINE = true; API_MODE = false;
+    return localLogin(email, pwd);   // 后端不可用 → 本地回退
+  }
+}
+/* 本地回退登录（仅演示，数据存浏览器） */
+function localLogin(email, pwd){
   const all = tenants();
-  if(PRESET[email] && pwd !== '123456' && !all[email]) return '演示账号密码为 123456';
   if(!all[email]){
     all[email] = {id:'t'+(Object.keys(all).length+1)+'_'+email.split('@')[0].replace(/\W/g,''),
                   email, pwd,
@@ -437,8 +475,34 @@ function applyIcp(p){
 let VIEW = [];
 let favView=false, todoView=false;
 
-function run(){
+async function run(){
   const p = currentIcp();
+  if(API_MODE){
+    try{
+      const q = new URLSearchParams();
+      q.set('market', p.market || '全部');
+      p.ind.forEach(x=>q.append('ind',x));
+      p.rg.forEach(x=>q.append('rg',x));
+      p.role.forEach(x=>q.append('role',x));
+      p.cert.forEach(x=>q.append('cert',x));
+      p.sig.forEach(x=>q.append('sig',x));
+      Object.keys(SRC_ON).forEach(k=>q.set('src_'+k, SRC_ON[k]?'1':'0'));
+      const data = await api('GET','/api/leads?'+q.toString());
+      data.sources.forEach(s=>SRC_ON[s.id]=s.on);
+      renderSources();
+      let out = data.leads.slice();
+      if(favView) out = out.filter(d=>ST.favs.includes(d.key));
+      if(todoView) out = out.filter(d=>!ST.contacted[d.key]);
+      VIEW = out;
+      renderPipe(data.rawCount, data.mergedCount, out.length);
+      render(out);
+      return;
+    }catch(e){ /* 回退本地引擎 */ }
+  }
+  localRun(p);
+}
+/* 本地回退：直接用浏览器内的精准引擎（后端不可用时） */
+function localRun(p){
   const {rawCount, merged} = aggregate();
   let out = [];
   merged.forEach(d=>{
@@ -538,6 +602,12 @@ function renderIcps(){
     '<div class="icp"><span class="nm" data-act="loadIcp" data-i="'+i+'">📌 '+esc(p.name)+'</span>'+
     '<span class="del" data-act="delIcp" data-i="'+i+'">✕</span></div>').join('');
 }
+/* 后端模式下，ICP 改动后从服务端重新同步（保证索引一致） */
+async function refreshIcps(){
+  if(!API_MODE) return;
+  try{ const r = await api('GET','/api/icps'); ST.icps = r.icps || []; }catch(e){}
+  renderIcps();
+}
 
 /* ---------------- 交互动作 ---------------- */
 function find(k){ return VIEW.find(d=>d.key===k) || aggregate().merged.find(d=>d.key===k); }
@@ -553,9 +623,10 @@ function contactHref(d){
   if(c.im)    return c.imType==='linkedin' ? 'https://'+c.im : null;
   return null;
 }
-function markContacted(k){
+async function markContacted(k){
   ST.contacted[k] = new Date().toISOString().slice(0,10);
-  save('contacted');
+  saveLocal('contacted');
+  if(API_MODE){ try{ await api('POST','/api/contacts/'+encodeURIComponent(k)); }catch(e){} }
 }
 function copy(text,label){
   navigator.clipboard.writeText(text).then(()=>toast('已复制'+(label||''))).catch(()=>toast('复制失败，请手动选中复制'));
@@ -594,19 +665,19 @@ document.addEventListener('click', e=>{
   const a = el.dataset.act;
 
   if(a==='login'){
-    const err = doLogin(document.getElementById('lu').value, document.getElementById('lp').value);
+    const err = await doLogin(document.getElementById('lu').value, document.getElementById('lp').value);
     if(err){ document.getElementById('lerr').textContent = err; return; }
     enterApp(); return;
   }
   if(a==='quick'){
     document.getElementById('lu').value = el.dataset.u;
     document.getElementById('lp').value = '123456';
-    const err = doLogin(el.dataset.u,'123456');
+    const err = await doLogin(el.dataset.u,'123456');
     if(err){ document.getElementById('lerr').textContent=err; return; }
     enterApp(); return;
   }
   if(a==='logout'){
-    localStorage.removeItem(LS+'session'); TENANT=null;
+    localStorage.removeItem(LS+'token'); localStorage.removeItem(LS+'session'); TOKEN=null; API_MODE=false; TENANT=null;
     document.getElementById('app').style.display='none';
     document.getElementById('login').style.display='flex';
     document.getElementById('lp').value=''; document.getElementById('lerr').textContent='';
@@ -631,10 +702,18 @@ document.addEventListener('click', e=>{
     const auto=[p.market].concat(p.ind,p.rg,p.sig).filter(x=>x&&x!=='全部').slice(0,4).join('/')||'全部客户';
     const name=prompt('给这个常用 ICP 起个名字：', auto);
     if(!name) return;
-    ST.icps.push({name, ...p}); save('icps'); renderIcps(); toast('已保存到常用 ICP'); return;
+    const item={name, ...p};
+    ST.icps.push(item); saveLocal('icps');
+    if(API_MODE){ try{ await api('POST','/api/icps',item); }catch(e){} await refreshIcps(); } else renderIcps();
+    toast('已保存到常用 ICP'); return;
   }
   if(a==='loadIcp'){ applyIcp(ST.icps[+el.dataset.i]); run(); toast('已载入：'+ST.icps[+el.dataset.i].name); return; }
-  if(a==='delIcp'){ const n=ST.icps[+el.dataset.i].name; ST.icps.splice(+el.dataset.i,1); save('icps'); renderIcps(); toast('已删除 '+n); return; }
+  if(a==='delIcp'){
+    const n=ST.icps[+el.dataset.i].name;
+    ST.icps.splice(+el.dataset.i,1); saveLocal('icps');
+    if(API_MODE){ try{ await api('DELETE','/api/icps/'+el.dataset.i); }catch(e){} await refreshIcps(); } else renderIcps();
+    toast('已删除 '+n); return;
+  }
   if(a==='favView'){ favView=!favView; el.classList.toggle('on',favView); run(); return; }
   if(a==='todoView'){ todoView=!todoView; el.classList.toggle('on',todoView); run(); return; }
   if(a==='csv'){ exportCSV(); return; }
@@ -642,8 +721,11 @@ document.addEventListener('click', e=>{
   if(a==='copyAll'){ const d=find(el.dataset.k); copy(contactText(d),'完整联系方式'); return; }
   if(a==='fav'){
     const k=el.dataset.k;
-    if(ST.favs.includes(k)) ST.favs=ST.favs.filter(x=>x!==k); else ST.favs.push(k);
-    save('favs'); run(); toast(ST.favs.includes(k)?'已收藏到「我的收藏」':'已取消收藏'); return;
+    const has = ST.favs.includes(k);
+    if(has) ST.favs = ST.favs.filter(x=>x!==k); else ST.favs.push(k);
+    saveLocal('favs');
+    if(API_MODE){ try{ if(has) await api('DELETE','/api/favorites/'+encodeURIComponent(k)); else await api('POST','/api/favorites',{key:k}); }catch(e){} }
+    run(); toast(has?'已取消收藏':'已收藏到「我的收藏」'); return;
   }
   if(a==='contact'){
     const d=find(el.dataset.k), h=contactHref(d);
@@ -657,20 +739,26 @@ document.addEventListener('click', e=>{
 document.getElementById('lp').addEventListener('keydown',e=>{ if(e.key==='Enter') document.querySelector('[data-act="login"]').click(); });
 
 /* ---------------- 进入应用 ---------------- */
-function enterApp(){
-  loadState();
+async function enterApp(){
+  if(API_MODE){
+    try{ const me = await api('GET','/api/me'); TENANT = me.tenant; }
+    catch(e){ API_MODE = false; OFFLINE = true; }
+  }
+  await loadState();
   document.getElementById('login').style.display='none';
   document.getElementById('app').style.display='block';
-  document.getElementById('tname').textContent = TENANT.name;
+  document.getElementById('tname').textContent = TENANT ? TENANT.name : '本地演示';
   document.getElementById('tenantNote').innerHTML =
-    '当前租户 <b>'+esc(TENANT.name)+'</b>（'+esc(TENANT.email)+'，租户 ID '+esc(TENANT.id)+'）。'+
-    '收藏 '+ST.favs.length+' 条 · 常用 ICP '+ST.icps.length+' 个 · 已联系 '+Object.keys(ST.contacted).length+' 家 —— '+
-    '这些数据只属于本租户，换账号登录不可见（真实版由后端按 tenant_id 行级隔离）。';
-  if(TENANT.market && TENANT.market!=='全部') setSel('market',[TENANT.market]);
+    (API_MODE
+      ? '当前租户 <b>'+esc(TENANT.name)+'</b>（'+esc(TENANT.email)+'，租户 ID '+esc(TENANT.id)+'）数据由后端按 <b>tenant_id</b> 行级隔离，换账号/换设备互不可见。'
+      : '⚠ 后端未连接，当前为<b>本地演示</b>模式（收藏/ICP 仅存浏览器，换设备不互通）。')
+    + ' 收藏 '+ST.favs.length+' 条 · 常用 ICP '+ST.icps.length+' 个 · 已联系 '+Object.keys(ST.contacted).length+' 家。';
+  if(TENANT && TENANT.market && TENANT.market!=='全部') setSel('market',[TENANT.market]);
   renderSources(); renderIcps(); run();
 }
 /* 会话恢复 */
 (function(){
+  if(TOKEN){ enterApp(); return; }   // 有 token → 直接进（从后端拉取租户与状态）
   const s = localStorage.getItem(LS+'session'), all = tenants();
   if(s && all[s]){ TENANT = all[s]; enterApp(); }
 })();

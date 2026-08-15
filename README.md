@@ -32,9 +32,27 @@
 | `获客逻辑设计.md` | 国内外主流获客软件逻辑抽象 + A国内/B国外落地方案（本产品的数据源来源与转化 SOP） |
 | `对外获客软件产品设计.md` | 本产品设计：闭环、ICP 维度、适配器契约、去重算法、评分引擎、多租户架构、真实 API 接入清单 |
 
+## 运行后端（真实多租户 SaaS 骨架，零依赖）
+
+前端已改为「后端优先、本地回退」：有后端时收藏 / 常用 ICP / 联系记录按 `tenant_id` 行级隔离存服务端；后端不可用时自动回退浏览器本地（演示）。
+
+```bash
+# 需要 Node 18+（无需 npm install，零外部依赖）
+node server/index.js            # 默认端口 8787，可用 PORT=xxxx 覆盖
+# 浏览器打开 http://localhost:8787
+```
+
+- `server/engine.js` — 精准引擎（多源聚合去重 + ICP 评分），纯函数
+- `server/store.js` — JSON 存储层，所有读写按 `tenant_id` 过滤（生产替换为 SQLite/Postgres，接口不变）
+- `server/jwt.js` — 极简 HS256 JWT（内置 crypto，无依赖）
+- `server/index.js` — 路由：注册/登录、`/api/leads`（公开）、收藏/ICP/联系（受保护）
+- `server/test_api.js` — 端到端测试：`node server/test_api.js`（需先启动服务），验证注册→登录→收藏→**跨租户隔离**→401 拦截，当前 19/19 通过
+
+> 演示账号在后端启动时自动 seed；`server/data.json` 为运行时数据（已 gitignore）。
+
 ## 下一步
 
-把 `mvp/index.html` 中的 mock 适配器替换为真实 API 客户端即可上真实数据 —— 适配器契约与引擎已就位，接入顺序与所需凭据见 `对外获客软件产品设计.md` 第 8.1 节。
+把真实数据源（企查查 / 海关 / LinkedIn）按 `对外获客软件产品设计.md` 第 8.1 节的适配器契约接入 `server/engine.js` 的 `RAW` 产出即可上真实数据 —— 聚合 / 去重 / 评分 / 多租户逻辑全部复用，无需改动。
 
 ## 合规
 
