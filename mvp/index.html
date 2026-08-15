@@ -3,21 +3,41 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>靶心 · 工业 B2B 目标客户精准发现（MVP 原型 v2）</title>
+<title>靶心 · 工业 B2B 目标客户精准发现（SaaS 原型 v3）</title>
 <style>
   :root{ --bg:#f6f8fb; --card:#fff; --line:#e3e8ef; --txt:#1f2933; --sub:#66727f;
-         --brand:#2563eb; --brand2:#0ea5a4; --ok:#16a34a; --warn:#d97706; --gold:#eab308; }
+         --brand:#2563eb; --brand2:#0ea5a4; --ok:#16a34a; --warn:#d97706; --gold:#eab308; --red:#dc2626;}
   *{box-sizing:border-box;font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;}
   body{margin:0;background:var(--bg);color:var(--txt);font-size:14px;}
-  header{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#fff;padding:18px 24px;}
-  header h1{margin:0;font-size:20px;}
-  header p{margin:6px 0 0;opacity:.9;font-size:13px;}
+
+  /* ---------- 登录 ---------- */
+  #login{position:fixed;inset:0;background:linear-gradient(135deg,#1e3a8a,#0f766e);display:flex;align-items:center;justify-content:center;z-index:99;}
+  .lbox{background:#fff;border-radius:14px;padding:28px;width:400px;box-shadow:0 18px 50px rgba(0,0,0,.28);}
+  .lbox h2{margin:0 0 4px;font-size:20px;}
+  .lbox .s{color:var(--sub);font-size:12.5px;margin:0 0 18px;}
+  .lbox input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;margin-bottom:10px;font-size:14px;}
+  .lbox .err{color:var(--red);font-size:12px;min-height:16px;margin-bottom:6px;}
+  .quick{display:flex;gap:8px;margin-top:14px;}
+  .quick button{flex:1;border:1px solid var(--line);background:#f8fafc;border-radius:8px;padding:9px 6px;font-size:12px;cursor:pointer;line-height:1.4;}
+  .quick button:hover{background:#eef6ff;border-color:var(--brand);}
+  .tip{margin-top:14px;font-size:11.5px;color:var(--sub);background:#f8fafc;border:1px dashed var(--line);border-radius:8px;padding:8px 10px;}
+
+  /* ---------- 顶栏 ---------- */
+  header{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#fff;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  header h1{margin:0;font-size:17px;}
+  header .sub{font-size:11.5px;opacity:.9;margin-top:3px;}
+  .who{display:flex;align-items:center;gap:10px;font-size:12.5px;}
+  .who .badge{background:rgba(255,255,255,.2);border-radius:14px;padding:4px 11px;}
+  .who button{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:8px;padding:5px 12px;cursor:pointer;font-size:12px;}
+  .who button:hover{background:rgba(255,255,255,.3);}
+
   .wrap{display:flex;gap:16px;padding:16px;align-items:flex-start;}
   .panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;}
-  .left{width:320px;flex:0 0 320px;position:sticky;top:16px;}
+  .left{width:336px;flex:0 0 336px;max-height:calc(100vh - 120px);overflow:auto;position:sticky;top:16px;}
   .right{flex:1;min-width:0;}
-  h3{margin:0 0 10px;font-size:15px;}
-  .grp{margin-bottom:14px;}
+  h3{margin:0 0 10px;font-size:14.5px;}
+  h3 .n{color:var(--brand);}
+  .grp{margin-bottom:13px;}
   .grp label.t{display:block;font-weight:600;margin-bottom:6px;color:var(--sub);font-size:12px;}
   .chips{display:flex;flex-wrap:wrap;gap:6px;}
   .chip{border:1px solid var(--line);background:#fff;border-radius:16px;padding:4px 10px;cursor:pointer;font-size:12px;user-select:none;}
@@ -25,51 +45,113 @@
   .btn{display:block;width:100%;border:none;border-radius:8px;padding:10px;font-size:14px;cursor:pointer;margin-top:6px;}
   .btn.primary{background:var(--brand);color:#fff;}
   .btn.ghost{background:#eef2f7;color:var(--txt);}
-  .stat{display:flex;gap:10px;margin-bottom:12px;}
-  .stat .box{flex:1;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center;}
-  .stat .num{font-size:26px;font-weight:700;color:var(--brand);}
-  .stat .lab{font-size:12px;color:var(--sub);}
-  table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
-  th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-size:12.5px;}
-  th{background:#f0f4f9;color:var(--sub);position:sticky;top:0;}
-  .score{font-weight:700;color:var(--ok);}
+  .hr{height:1px;background:var(--line);margin:14px 0;}
+
+  /* 数据源 */
+  .src{display:flex;align-items:center;gap:7px;padding:5px 7px;border:1px solid var(--line);border-radius:7px;margin-bottom:5px;cursor:pointer;font-size:12px;background:#fff;}
+  .src.on{border-color:var(--brand);background:#f2f7ff;}
+  .src .dot{width:7px;height:7px;border-radius:50%;background:#cbd5e1;flex:0 0 7px;}
+  .src.on .dot{background:var(--ok);}
+  .src .nm{flex:1;}
+  .src .st{font-size:10.5px;color:var(--sub);background:#f1f5f9;border-radius:4px;padding:1px 5px;}
+
+  /* 常用 ICP */
+  .icp{display:flex;align-items:center;gap:6px;font-size:12px;border:1px solid var(--line);border-radius:7px;padding:5px 8px;margin-bottom:5px;background:#fff;}
+  .icp .nm{flex:1;cursor:pointer;color:var(--brand);}
+  .icp .del{cursor:pointer;color:var(--sub);}
+
+  .stat{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
+  .stat .box{flex:1;min-width:110px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:11px;text-align:center;}
+  .stat .num{font-size:24px;font-weight:700;color:var(--brand);}
+  .stat .lab{font-size:11.5px;color:var(--sub);}
+  .pipe{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:12.5px;color:var(--sub);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .pipe b{color:var(--txt);}
+  .pipe .arw{color:var(--brand);}
+
+  .toolbar{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
+  .mini{border:1px solid var(--line);background:#fff;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:11.5px;color:var(--brand);user-select:none;}
+  .mini:hover{background:#eef6ff;}
+  .mini.on{background:var(--brand);color:#fff;border-color:var(--brand);}
+  .mini.fav{color:var(--gold);border-color:var(--gold);}
+  .mini.fav.on{background:var(--gold);color:#fff;border-color:var(--gold);}
+  .mini.contact{background:var(--ok);color:#fff;border-color:var(--ok);}
+  .toolbar .mini{font-size:12.5px;padding:5px 12px;}
+
+  /* 卡片 */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(430px,1fr));gap:12px;}
+  .cust{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px 14px;}
+  .cust.hi{border-left:4px solid var(--ok);}
+  .cust .top{display:flex;align-items:flex-start;gap:8px;}
+  .cust .nm{font-size:15px;font-weight:700;flex:1;line-height:1.35;}
+  .cust .sc{font-size:20px;font-weight:800;color:var(--ok);line-height:1;}
+  .cust .sc small{display:block;font-size:10px;color:var(--sub);font-weight:400;text-align:right;}
+  .meta{color:var(--sub);font-size:12px;margin:5px 0 7px;}
+  .mkt{font-size:10.5px;padding:1px 7px;border-radius:10px;color:#fff;}
+  .mkt.cn{background:#2563eb;} .mkt.intl{background:#0ea5a4;}
   .tag{display:inline-block;background:#eef6ff;color:var(--brand);border-radius:4px;padding:1px 6px;margin:1px;font-size:11px;}
   .tag.s{background:#fef3e2;color:var(--warn);}
-  .mkt{font-size:11px;padding:1px 7px;border-radius:10px;color:#fff;}
-  .mkt.cn{background:#2563eb;} .mkt.intl{background:#0ea5a4;}
-  .empty{padding:30px;text-align:center;color:var(--sub);}
-  .act-row{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;}
-  .mini{border:1px solid var(--line);background:#fff;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:11.5px;color:var(--brand);}
-  .mini:hover{background:#eef6ff;}
-  .mini.fav{color:var(--gold);border-color:var(--gold);}
-  .mini.fav.on{background:var(--gold);color:#fff;}
-  .mini.contact{background:var(--ok);color:#fff;border-color:var(--ok);}
+  .tag.src{background:#f1f5f9;color:#475569;}
+  .tag.why{background:#f0fdf4;color:#15803d;}
+  .conf{font-size:11px;color:var(--sub);}
+  .conf b{color:var(--ok);}
+  .ct{background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-top:8px;font-size:12.5px;line-height:1.9;}
+  .ct .miss{color:var(--warn);font-size:11.5px;}
   .clink{color:var(--brand);text-decoration:none;}
   .clink:hover{text-decoration:underline;}
-  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1f2933;color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;opacity:0;transition:.2s;pointer-events:none;}
+  .act-row{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center;}
+  .done{font-size:11px;color:var(--ok);background:#f0fdf4;border-radius:4px;padding:2px 6px;}
+  .act{color:var(--brand);font-size:12px;margin-top:7px;}
+  .empty{padding:34px;text-align:center;color:var(--sub);background:#fff;border:1px solid var(--line);border-radius:10px;}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1f2933;color:#fff;padding:9px 18px;border-radius:8px;font-size:13px;opacity:0;transition:.2s;pointer-events:none;z-index:200;}
   .toast.show{opacity:1;}
-  .toolbar{display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap;}
-  .toolbar .mini{font-size:12.5px;padding:5px 12px;}
+  .note{font-size:11.5px;color:var(--sub);background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px 10px;margin-bottom:12px;}
 </style>
 </head>
 <body>
+
+<!-- ================= 登录 ================= -->
+<div id="login">
+  <div class="lbox">
+    <h2>靶心 · 目标客户精准发现</h2>
+    <p class="s">工业 B2B 获客 SaaS · 多租户版　登录后数据按账号隔离</p>
+    <input id="lu" placeholder="账号（邮箱）" autocomplete="username">
+    <input id="lp" type="password" placeholder="密码" autocomplete="current-password">
+    <div class="err" id="lerr"></div>
+    <button class="btn primary" data-act="login">登 录</button>
+    <div class="quick">
+      <button data-act="quick" data-u="demo@valve-cn.com">试用账号 A<br><b>国内销售团队</b></button>
+      <button data-act="quick" data-u="demo@valve-ex.com">试用账号 B<br><b>外贸出口团队</b></button>
+    </div>
+    <div class="tip">演示密码统一 <b>123456</b>；输入任意新邮箱+密码可直接开通新租户。收藏 / 常用 ICP / 联系记录按租户隔离，互不可见。</div>
+  </div>
+</div>
+
+<!-- ================= 主应用 ================= -->
+<div id="app" style="display:none">
 <header>
-  <h1>靶心 · 工业 B2B 目标客户精准发现（MVP 原型 v2）</h1>
-  <p>用户只描述「我要找什么样的客户」，软件精准筛选并交付清单 —— 联系方式一键复制、可收藏、可点击直接联系。— 阀门厂参考场景</p>
+  <div>
+    <h1>靶心 · 工业 B2B 目标客户精准发现</h1>
+    <div class="sub">说出你要找什么样的客户 → 多源聚合去重 → 精准清单：可复制 / 可收藏 / 可点击直接联系</div>
+  </div>
+  <div class="who">
+    <span class="badge" id="tname">—</span>
+    <span class="badge" id="tplan">试用版 · 3 席位</span>
+    <button data-act="logout">退出登录</button>
+  </div>
 </header>
 
 <div class="wrap">
   <div class="panel left">
-    <h3>① 我要找什么样的客户（ICP）</h3>
+    <h3><span class="n">①</span> 我要找什么样的客户（ICP）</h3>
     <div class="grp"><label class="t">市场</label>
-      <div class="radios" id="market">
+      <div class="chips" id="market">
         <span class="chip on" data-v="全部">全部</span><span class="chip" data-v="国内">国内 A</span><span class="chip" data-v="国外">国外 B</span>
       </div></div>
     <div class="grp"><label class="t">行业（硬过滤）</label>
       <div class="chips" id="industry">
         <span class="chip" data-v="石化">石化</span><span class="chip" data-v="电力">电力</span>
         <span class="chip" data-v="水处理">水处理</span><span class="chip" data-v="冶金">冶金</span>
-        <span class="chip" data-v="造船">造船</span><span class="chip" data-v="油气">油气</span><span class="chip" data-v="EPC">EPC</span>
+        <span class="chip" data-v="造船">造船</span><span class="chip" data-v="油气">油气</span>
       </div></div>
     <div class="grp"><label class="t">地区（硬过滤）</label>
       <div class="chips" id="region">
@@ -85,189 +167,513 @@
     <div class="grp"><label class="t">认证要求（加分）</label>
       <div class="chips" id="cert">
         <span class="chip" data-v="API 6D">API 6D</span><span class="chip" data-v="API 600">API 600</span><span class="chip" data-v="CE">CE</span><span class="chip" data-v="PED">PED</span>
-        <span class="chip" data-v="ISO 9001">ISO 9001</span><span class="chip" data-v="TS">TS</span><span class="chip" data-v="防火">防火</span><span class="chip" data-v="3A">3A</span>
+        <span class="chip" data-v="ISO 9001">ISO 9001</span><span class="chip" data-v="TS">TS</span><span class="chip" data-v="防火">防火</span>
       </div></div>
     <div class="grp"><label class="t">采购信号（加权）</label>
       <div class="chips" id="signal">
         <span class="chip" data-v="招标">招标</span><span class="chip" data-v="海关进口">海关进口</span><span class="chip" data-v="扩产">扩产</span>
         <span class="chip" data-v="职位变动">职位变动</span><span class="chip" data-v="RFQ">RFQ</span><span class="chip" data-v="官网需求">官网需求</span>
       </div></div>
-    <button class="btn primary" onclick="run()">② 精准筛选并出清单</button>
-    <button class="btn ghost" onclick="resetAll()">清空要求</button>
+    <button class="btn primary" data-act="run">② 精准筛选并出清单</button>
+    <button class="btn ghost" data-act="saveIcp">保存为常用 ICP</button>
+    <button class="btn ghost" data-act="reset">清空要求</button>
+
+    <div class="hr"></div>
+    <h3><span class="n">③</span> 数据源（可插拔适配器）</h3>
+    <div id="srcList"></div>
+    <div style="font-size:11px;color:var(--sub);margin-top:6px;">勾选的源会真实参与「聚合 → 归一化 → 去重合并 → 交叉验证加权」。接真实 API 只需替换适配器，逻辑不变。</div>
+
+    <div class="hr"></div>
+    <h3><span class="n">④</span> 我的常用 ICP</h3>
+    <div id="icpList"></div>
   </div>
 
   <div class="right">
+    <div class="note" id="tenantNote"></div>
     <div class="stat">
-      <div class="box"><div class="num" id="cnt">0</div><div class="lab">精准命中目标客户</div></div>
+      <div class="box"><div class="num" id="cnt">0</div><div class="lab">ICP 精准命中</div></div>
       <div class="box"><div class="num" id="top">—</div><div class="lab">最高匹配分</div></div>
       <div class="box"><div class="num" id="favcnt">0</div><div class="lab">我的收藏</div></div>
       <div class="box"><div class="num" id="strong">0</div><div class="lab">强购买信号</div></div>
+      <div class="box"><div class="num" id="multi">0</div><div class="lab">多源交叉验证</div></div>
     </div>
+    <div class="pipe" id="pipe"></div>
     <div class="toolbar">
-      <button class="mini" id="favToggle" onclick="toggleFavView()">★ 只看收藏</button>
-      <button class="mini" onclick="exportCSV()">导出清单 CSV</button>
-      <span style="color:var(--sub);font-size:12px;">分数 = 硬命中基础分 + 角色 + 认证 + 采购信号加权，降序</span>
+      <span class="mini" data-act="favView" id="favToggle">★ 只看收藏</span>
+      <span class="mini" data-act="todoView" id="todoToggle">未联系优先</span>
+      <span class="mini" data-act="csv">导出清单 CSV</span>
+      <span style="color:var(--sub);font-size:12px;">分 = 基础 + 角色 + 认证 + 采购信号 + 多源交叉验证</span>
     </div>
     <div id="result"></div>
   </div>
 </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
-// 样本目标客户库（演示数据）。contact 结构化：phone / email / im(微信或LinkedIn)
-const DATA = [
- {m:"国内",n:"中石化某工程公司",ind:"石化",rg:"华东",sz:"大型",role:"采购部",cert:["API 6D","TS","ISO 9001"],sig:["招标","扩产"],contact:{name:"张工",title:"采购经理",phone:"138****1201",im:"微信:zhang_valve",imType:"wechat"},act:"先投招标跟进 + 发选型手册"},
- {m:"国内",n:"浙江某阀门经销商",ind:"石化",rg:"华东",sz:"中型",role:"经销商",cert:["TS","ISO 9001"],sig:["RFQ"],contact:{name:"王总",title:"总经理",phone:"138****2202",im:"微信:wang_valve",imType:"wechat"},act:"经销商政策 + 样品寄送"},
- {m:"国内",n:"广东水处理设备厂",ind:"水处理",rg:"华南",sz:"中型",role:"采购部",cert:["ISO 9001","CE"],sig:["招标"],contact:{name:"李工",title:"采购主管",phone:"137****3303",im:"微信:li_water",imType:"wechat"},act:"招标响应 + 技术对接"},
- {m:"国内",n:"山东电力建设公司",ind:"电力",rg:"华北",sz:"大型",role:"技术部",cert:["API 600","TS"],sig:["招标","职位变动"],contact:{name:"赵工",title:"技术总监",phone:"139****4404",im:"微信:zhao_power",imType:"wechat"},act:"技术参数确认 + 入合格供方"},
- {m:"国内",n:"江苏某泵业 OEM",ind:"石化",rg:"华东",sz:"中型",role:"采购部",cert:["API 6D","ISO 9001"],sig:["RFQ","官网需求"],contact:{name:"陈工",title:"采购",phone:"138****5505",im:"微信:chen_pump",imType:"wechat"},act:"配套报价 + 寄样"},
- {m:"国内",n:"上海某船厂",ind:"造船",rg:"华东",sz:"大型",role:"采购部",cert:["API 6D","CE","防火"],sig:["招标"],contact:{name:"周工",title:"采购经理",phone:"137****6606",im:"微信:zhou_ship",imType:"wechat"},act:"船级社认证对接"},
- {m:"国内",n:"本地周边某水厂",ind:"水处理",rg:"本地周边",sz:"小型",role:"老板/工厂主",cert:["ISO 9001"],sig:["官网需求"],contact:{name:"孙厂长",title:"厂长",phone:"136****7707",im:"微信:sun_plant",imType:"wechat"},act:"老板直连 + 现场拜访"},
- {m:"国内",n:"河北冶金集团",ind:"冶金",rg:"华北",sz:"大型",role:"技术部",cert:["TS","ISO 9001"],sig:["扩产"],contact:{name:"刘工",title:"技术部",phone:"139****8808",im:"微信:liu_metal",imType:"wechat"},act:"扩产配套提前介入"},
- {m:"国内",n:"华南油气工程",ind:"油气",rg:"华南",sz:"大型",role:"采购部",cert:["API 6D","API 600","TS"],sig:["招标"],contact:{name:"吴工",title:"采购经理",phone:"138****9909",im:"微信:wu_oil",imType:"wechat"},act:"招标 + 入供应商库"},
- {m:"国内",n:"华中某阀门贸易",ind:"石化",rg:"华中",sz:"小型",role:"经销商",cert:["TS"],sig:["RFQ"],contact:{name:"郑总",title:"贸易经理",phone:"137****1010",im:"微信:zheng_trade",imType:"wechat"},act:"批发价 + 区域代理"},
- {m:"国内",n:"北京某环保工程EPC",ind:"水处理",rg:"华北",sz:"中型",role:"采购部",cert:["ISO 9001","CE"],sig:["招标","RFQ"],contact:{name:"冯工",title:"采购",phone:"138****1111",im:"微信:feng_epc",imType:"wechat"},act:"EPC 总包配套"},
- {m:"国内",n:"浙江某石化民企",ind:"石化",rg:"华东",sz:"大型",role:"老板/工厂主",cert:["API 6D","TS"],sig:["扩产","职位变动"],contact:{name:"许总",title:"老板",phone:"139****1212",im:"微信:xu_boss",imType:"wechat"},act:"老板层建联 + 战略供货"},
- {m:"国内",n:"天津某电厂",ind:"电力",rg:"华北",sz:"大型",role:"技术部",cert:["API 600","TS"],sig:["招标"],contact:{name:"韩工",title:"技术",phone:"138****1313",im:"微信:han_power",imType:"wechat"},act:"技术选型 + 招标"},
- {m:"国内",n:"广东某水处理科技",ind:"水处理",rg:"华南",sz:"中型",role:"采购部",cert:["CE","ISO 9001"],sig:["官网需求"],contact:{name:"曹工",title:"采购",phone:"137****1414",im:"微信:cao_water",imType:"wechat"},act:"官网需求响应"},
- {m:"国内",n:"山东某造船厂",ind:"造船",rg:"华东",sz:"大型",role:"采购部",cert:["API 6D","CE"],sig:["扩产"],contact:{name:"唐工",title:"采购",phone:"138****1515",im:"微信:tang_ship",imType:"wechat"},act:"扩产产能锁定"},
- {m:"国内",n:"华中某冶金设备",ind:"冶金",rg:"华中",sz:"中型",role:"技术部",cert:["TS","ISO 9001"],sig:["RFQ"],contact:{name:"邓工",title:"技术",phone:"139****1616",im:"微信:deng_metal",imType:"wechat"},act:"询盘报价"},
- {m:"国内",n:"本地周边某机电经销商",ind:"石化",rg:"本地周边",sz:"小型",role:"经销商",cert:["ISO 9001"],sig:["官网需求"],contact:{name:"萧总",title:"经销商",phone:"136****1717",im:"微信:xiao_motor",imType:"wechat"},act:"本地经销合作"},
- {m:"国内",n:"华东油气储运",ind:"油气",rg:"华东",sz:"大型",role:"采购部",cert:["API 6D","防火"],sig:["招标","职位变动"],contact:{name:"程工",title:"采购",phone:"138****1818",im:"微信:cheng_oil",imType:"wechat"},act:"储运安全认证 + 招标"},
+/* =========================================================================
+   靶心 SaaS 原型 v3
+   1) 多租户：登录后所有状态（收藏/常用ICP/联系记录）按 tenant 键隔离
+   2) 多源聚合去重引擎：SEED(真值) → 拆成各数据源的"部分字段原始记录"
+      → 归一化 key → 合并去重 → 字段互补 → 多源交叉验证加置信
+   3) ICP 精准过滤 + 评分 + 复制/收藏/点击联系
+   ========================================================================= */
 
- {m:"国外",n:"US Valve Importer A",ind:"石化",rg:"美国",sz:"中型",role:"Importer",cert:["API 6D","API 600"],sig:["海关进口","RFQ"],contact:{name:"John Smith",title:"Procurement",email:"john@importer-a.com",im:"linkedin.com/in/johnsmith",imType:"linkedin"},act:"海关数据命中 + 发目录/样品"},
- {m:"国外",n:"German Distributor B",ind:"电力",rg:"欧洲",sz:"中型",role:"Distributor",cert:["CE","PED","ISO 9001"],sig:["海关进口"],contact:{name:"Hans Müller",title:"Buyer",email:"hans@distributor-b.de",im:"linkedin.com/in/hansmueller",imType:"linkedin"},act:"CE/PED 合规 + 分销协议"},
- {m:"国外",n:"SEA EPC C",ind:"水处理",rg:"东南亚",sz:"大型",role:"EPC",cert:["API 6D","ISO 9001"],sig:["招标","扩产"],contact:{name:"Tan Wei",title:"Project Mgr",email:"tan@epc-c.sg",im:"linkedin.com/in/tanwei",imType:"linkedin"},act:"EPC 总包 + 本地代理"},
- {m:"国外",n:"MENA Oil EPC",ind:"油气",rg:"中东",sz:"大型",role:"EPC",cert:["API 6D","API 600","防火"],sig:["海关进口","RFQ"],contact:{name:"Omar Said",title:"Procurement",email:"omar@epc-d.ae",im:"linkedin.com/in/omarsaid",imType:"linkedin"},act:"油气认证 + InMail 开发"},
- {m:"国外",n:"US Pump OEM",ind:"石化",rg:"美国",sz:"中型",role:"OEM",cert:["API 600","ISO 9001"],sig:["官网需求"],contact:{name:"Mike Lee",title:"Sourcing",email:"mike@pump-oem.com",im:"linkedin.com/in/mikelee",imType:"linkedin"},act:"OEM 配套报价"},
- {m:"国外",n:"EU Water Utility",ind:"水处理",rg:"欧洲",sz:"大型",role:"采购部",cert:["CE","PED"],sig:["招标"],contact:{name:"Sophie Ren",title:"Procurement",email:"sophie@water-util.fr",im:"linkedin.com/in/sophieren",imType:"linkedin"},act:"公用事业招标 + PED"},
- {m:"国外",n:"SEA Distributor",ind:"造船",rg:"东南亚",sz:"中型",role:"Distributor",cert:["CE","API 6D"],sig:["海关进口","职位变动"],contact:{name:"Wei Lin",title:"MD",email:"wei@distributor-g.sg",im:"linkedin.com/in/weilin",imType:"linkedin"},act:"海关命中 + 职位变动暖推荐"},
- {m:"国外",n:"Brazil Importer",ind:"冶金",rg:"南美",sz:"中型",role:"Importer",cert:["API 6D","ISO 9001"],sig:["海关进口","RFQ"],contact:{name:"Carlos Silva",title:"Import Mgr",email:"carlos@import-h.br",im:"linkedin.com/in/carlossilva",imType:"linkedin"},act:"海关进口商开发"},
- {m:"国外",n:"US EPC Energy",ind:"电力",rg:"美国",sz:"大型",role:"EPC",cert:["API 600","防火"],sig:["招标","扩产"],contact:{name:"Sarah King",title:"Procurement",email:"sarah@epc-energy.us",im:"linkedin.com/in/sarahking",imType:"linkedin"},act:"电力 EPC + 扩产"},
- {m:"国外",n:"EU Valve Wholesaler",ind:"石化",rg:"欧洲",sz:"中型",role:"Distributor",cert:["CE","PED","API 6D"],sig:["海关进口"],contact:{name:"Lukas Wolf",title:"Buyer",email:"lukas@wholesaler-j.de",im:"linkedin.com/in/lukaswolf",imType:"linkedin"},act:"批发分销 + 认证"},
- {m:"国外",n:"MENA OEM",ind:"油气",rg:"中东",sz:"中型",role:"OEM",cert:["API 6D","ISO 9001"],sig:["官网需求","RFQ"],contact:{name:"Ali Hassan",title:"Sourcing",email:"ali@oem-k.ae",im:"linkedin.com/in/alihassan",imType:"linkedin"},act:"OEM 配套 + RFQ"},
- {m:"国外",n:"SEA Power Plant",ind:"电力",rg:"东南亚",sz:"大型",role:"采购部",cert:["CE","PED"],sig:["招标"],contact:{name:"Budi Sant",title:"Procurement",email:"budi@powerplant-l.id",im:"linkedin.com/in/budisant",imType:"linkedin"},act:"电厂招标 + PED"},
- {m:"国外",n:"US Water Distributor",ind:"水处理",rg:"美国",sz:"中型",role:"Distributor",cert:["API 600","ISO 9001"],sig:["海关进口","职位变动"],contact:{name:"Emma Reed",title:"Buyer",email:"emma@waterdist-us.com",im:"linkedin.com/in/emmareed",imType:"linkedin"},act:"海关 + LinkedIn 暖推荐"},
- {m:"国外",n:"EU Shipbuilder",ind:"造船",rg:"欧洲",sz:"大型",role:"采购部",cert:["CE","API 6D"],sig:["扩产"],contact:{name:"Klaus Berg",title:"Procurement",email:"klaus@shipbuilder-n.de",im:"linkedin.com/in/klausberg",imType:"linkedin"},act:"船厂扩产 + CE"},
- {m:"国外",n:"SA EPC",ind:"油气",rg:"南美",sz:"大型",role:"EPC",cert:["API 6D","API 600"],sig:["招标","海关进口"],contact:{name:"Diego Lopez",title:"Procurement",email:"diego@epc-o.ar",im:"linkedin.com/in/diegolopez",imType:"linkedin"},act:"南美 EPC + 海关"},
- {m:"国外",n:"SEA Importer",ind:"石化",rg:"东南亚",sz:"中型",role:"Importer",cert:["API 6D","ISO 9001"],sig:["海关进口","RFQ"],contact:{name:"Nina Tan",title:"Import Mgr",email:"nina@importer-p.sg",im:"linkedin.com/in/ninatan",imType:"linkedin"},act:"进口商开发"},
- {m:"国外",n:"MENA Water EPC",ind:"水处理",rg:"中东",sz:"大型",role:"EPC",cert:["CE","PED"],sig:["招标","扩产"],contact:{name:"Layla Ali",title:"Procurement",email:"layla@water-epc.q.ae",im:"linkedin.com/in/laylaali",imType:"linkedin"},act:"水务 EPC + 扩产"},
- {m:"国外",n:"US Metal OEM",ind:"冶金",rg:"美国",sz:"中型",role:"OEM",cert:["API 600","ISO 9001"],sig:["官网需求"],contact:{name:"Tom Ray",title:"Sourcing",email:"tom@metal-oem.us",im:"linkedin.com/in/tomray",imType:"linkedin"},act:"冶金 OEM 配套"}
+/* ---------------- 数据源适配器注册表 ---------------- */
+const SOURCES = [
+  {id:'qcc',      nm:'企查查（国内工商）',    mkt:'国内', st:'模拟', on:true},
+  {id:'bid',      nm:'招投标/Tender 库',      mkt:'双',   st:'模拟', on:true},
+  {id:'map',      nm:'地图 LBS（本地周边）',  mkt:'国内', st:'模拟', on:true},
+  {id:'web',      nm:'官网/GEO 内容线索',     mkt:'双',   st:'模拟', on:true},
+  {id:'news',     nm:'资讯监测（扩产/投产）', mkt:'双',   st:'模拟', on:true},
+  {id:'gdb',      nm:'全球企业库（国外工商）',mkt:'国外', st:'模拟', on:true},
+  {id:'customs',  nm:'海关进口数据',          mkt:'国外', st:'模拟', on:true},
+  {id:'linkedin', nm:'LinkedIn 决策人',       mkt:'国外', st:'模拟', on:true},
+  {id:'alibaba',  nm:'国际站/MIC（RFQ）',     mkt:'国外', st:'模拟', on:true},
+  {id:'enrich',   nm:'联系方式补全服务',      mkt:'双',   st:'增值', on:false}
 ];
-DATA.forEach((d,i)=>d.id=i);
+const SRC_ON = {}; SOURCES.forEach(s=>SRC_ON[s.id]=s.on);
 
-const SIG_W = {"招标":25,"海关进口":25,"扩产":15,"职位变动":15,"RFQ":12,"官网需求":12};
+/* ---------------- SEED：客户真值库（仅供各源投影，引擎看不到全貌） ---------------- */
+const SEED = [
+ {m:"国内",n:"中石化某工程公司",ind:"石化",rg:"华东",sz:"大型",role:"采购部",cert:["API 6D","TS","ISO 9001"],sig:["招标","扩产"],ct:{name:"张工",title:"采购经理",phone:"138****1201",im:"微信:zhang_valve",imType:"wechat"},act:"投招标跟进 + 发选型手册"},
+ {m:"国内",n:"浙江某阀门经销商",ind:"石化",rg:"华东",sz:"中型",role:"经销商",cert:["TS","ISO 9001"],sig:["RFQ"],ct:{name:"王总",title:"总经理",phone:"138****2202",im:"微信:wang_valve",imType:"wechat"},act:"经销商政策 + 样品寄送"},
+ {m:"国内",n:"广东水处理设备厂",ind:"水处理",rg:"华南",sz:"中型",role:"采购部",cert:["ISO 9001","CE"],sig:["招标"],ct:{name:"李工",title:"采购主管",phone:"137****3303",im:"微信:li_water",imType:"wechat"},act:"招标响应 + 技术对接"},
+ {m:"国内",n:"山东电力建设公司",ind:"电力",rg:"华北",sz:"大型",role:"技术部",cert:["API 600","TS"],sig:["招标","职位变动"],ct:{name:"赵工",title:"技术总监",phone:"139****4404",im:"微信:zhao_power",imType:"wechat"},act:"技术参数确认 + 入合格供方"},
+ {m:"国内",n:"江苏某泵业OEM",ind:"石化",rg:"华东",sz:"中型",role:"采购部",cert:["API 6D","ISO 9001"],sig:["RFQ","官网需求"],ct:{name:"陈工",title:"采购",phone:"138****5505",im:"微信:chen_pump",imType:"wechat"},act:"配套报价 + 寄样"},
+ {m:"国内",n:"上海某船厂",ind:"造船",rg:"华东",sz:"大型",role:"采购部",cert:["API 6D","CE","防火"],sig:["招标"],ct:{name:"周工",title:"采购经理",phone:"137****6606",im:"微信:zhou_ship",imType:"wechat"},act:"船级社认证对接"},
+ {m:"国内",n:"本地周边某水厂",ind:"水处理",rg:"本地周边",sz:"小型",role:"老板/工厂主",cert:["ISO 9001"],sig:["官网需求"],ct:{name:"孙厂长",title:"厂长",phone:"136****7707",im:"微信:sun_plant",imType:"wechat"},act:"老板直连 + 现场拜访"},
+ {m:"国内",n:"河北冶金集团",ind:"冶金",rg:"华北",sz:"大型",role:"技术部",cert:["TS","ISO 9001"],sig:["扩产"],ct:{name:"刘工",title:"技术部",phone:"139****8808",im:"微信:liu_metal",imType:"wechat"},act:"扩产配套提前介入"},
+ {m:"国内",n:"华南油气工程",ind:"油气",rg:"华南",sz:"大型",role:"采购部",cert:["API 6D","API 600","TS"],sig:["招标"],ct:{name:"吴工",title:"采购经理",phone:"138****9909",im:"微信:wu_oil",imType:"wechat"},act:"招标 + 入供应商库"},
+ {m:"国内",n:"华中某阀门贸易",ind:"石化",rg:"华中",sz:"小型",role:"经销商",cert:["TS"],sig:["RFQ"],ct:{name:"郑总",title:"贸易经理",phone:"137****1010",im:"微信:zheng_trade",imType:"wechat"},act:"批发价 + 区域代理"},
+ {m:"国内",n:"北京某环保工程EPC",ind:"水处理",rg:"华北",sz:"中型",role:"采购部",cert:["ISO 9001","CE"],sig:["招标","RFQ"],ct:{name:"冯工",title:"采购",phone:"138****1111",im:"微信:feng_epc",imType:"wechat"},act:"EPC 总包配套"},
+ {m:"国内",n:"浙江某石化民企",ind:"石化",rg:"华东",sz:"大型",role:"老板/工厂主",cert:["API 6D","TS"],sig:["扩产","职位变动"],ct:{name:"许总",title:"老板",phone:"139****1212",im:"微信:xu_boss",imType:"wechat"},act:"老板层建联 + 战略供货"},
+ {m:"国内",n:"天津某电厂",ind:"电力",rg:"华北",sz:"大型",role:"技术部",cert:["API 600","TS"],sig:["招标"],ct:{name:"韩工",title:"技术",phone:"138****1313",im:"微信:han_power",imType:"wechat"},act:"技术选型 + 招标"},
+ {m:"国内",n:"广东某水处理科技",ind:"水处理",rg:"华南",sz:"中型",role:"采购部",cert:["CE","ISO 9001"],sig:["官网需求"],ct:{name:"曹工",title:"采购",phone:"137****1414",im:"微信:cao_water",imType:"wechat"},act:"官网需求响应"},
+ {m:"国内",n:"山东某造船厂",ind:"造船",rg:"华东",sz:"大型",role:"采购部",cert:["API 6D","CE"],sig:["扩产"],ct:{name:"唐工",title:"采购",phone:"138****1515",im:"微信:tang_ship",imType:"wechat"},act:"扩产产能锁定"},
+ {m:"国内",n:"华中某冶金设备",ind:"冶金",rg:"华中",sz:"中型",role:"技术部",cert:["TS","ISO 9001"],sig:["RFQ"],ct:{name:"邓工",title:"技术",phone:"139****1616",im:"微信:deng_metal",imType:"wechat"},act:"询盘报价"},
+ {m:"国内",n:"本地周边某机电经销商",ind:"石化",rg:"本地周边",sz:"小型",role:"经销商",cert:["ISO 9001"],sig:["官网需求"],ct:{name:"萧总",title:"经销商",phone:"136****1717",im:"微信:xiao_motor",imType:"wechat"},act:"本地经销合作"},
+ {m:"国内",n:"华东油气储运",ind:"油气",rg:"华东",sz:"大型",role:"采购部",cert:["API 6D","防火"],sig:["招标","职位变动"],ct:{name:"程工",title:"采购",phone:"138****1818",im:"微信:cheng_oil",imType:"wechat"},act:"储运安全认证 + 招标"},
 
-// 收藏持久化（演示用 localStorage）
-let FAVS = JSON.parse(localStorage.getItem('baxin_favs')||'[]');
-let favView = false;
-function isFav(id){ return FAVS.includes(id); }
-function toggleFav(id){
-  if(isFav(id)) FAVS=FAVS.filter(x=>x!==id); else FAVS.push(id);
-  localStorage.setItem('baxin_favs',JSON.stringify(FAVS));
-  document.getElementById('favcnt').textContent=FAVS.length;
-  if(favView) run(); else refreshFavBtns();
-  toast(isFav(id)?'已收藏':'已取消收藏');
+ {m:"国外",n:"US Valve Importer A",ind:"石化",rg:"美国",sz:"中型",role:"Importer",cert:["API 6D","API 600"],sig:["海关进口","RFQ"],ct:{name:"John Smith",title:"Procurement",email:"john@importer-a.com",im:"linkedin.com/in/johnsmith",imType:"linkedin"},act:"海关数据命中 + 发目录/样品"},
+ {m:"国外",n:"German Distributor B",ind:"电力",rg:"欧洲",sz:"中型",role:"Distributor",cert:["CE","PED","ISO 9001"],sig:["海关进口"],ct:{name:"Hans Muller",title:"Buyer",email:"hans@distributor-b.de",im:"linkedin.com/in/hansmueller",imType:"linkedin"},act:"CE/PED 合规 + 分销协议"},
+ {m:"国外",n:"SEA EPC C",ind:"水处理",rg:"东南亚",sz:"大型",role:"EPC",cert:["API 6D","ISO 9001"],sig:["招标","扩产"],ct:{name:"Tan Wei",title:"Project Mgr",email:"tan@epc-c.sg",im:"linkedin.com/in/tanwei",imType:"linkedin"},act:"EPC 总包 + 本地代理"},
+ {m:"国外",n:"MENA Oil EPC",ind:"油气",rg:"中东",sz:"大型",role:"EPC",cert:["API 6D","API 600","防火"],sig:["海关进口","RFQ"],ct:{name:"Omar Said",title:"Procurement",email:"omar@epc-d.ae",im:"linkedin.com/in/omarsaid",imType:"linkedin"},act:"油气认证 + InMail 开发"},
+ {m:"国外",n:"US Pump OEM",ind:"石化",rg:"美国",sz:"中型",role:"OEM",cert:["API 600","ISO 9001"],sig:["官网需求"],ct:{name:"Mike Lee",title:"Sourcing",email:"mike@pump-oem.com",im:"linkedin.com/in/mikelee",imType:"linkedin"},act:"OEM 配套报价"},
+ {m:"国外",n:"EU Water Utility",ind:"水处理",rg:"欧洲",sz:"大型",role:"采购部",cert:["CE","PED"],sig:["招标"],ct:{name:"Sophie Ren",title:"Procurement",email:"sophie@water-util.fr",im:"linkedin.com/in/sophieren",imType:"linkedin"},act:"公用事业招标 + PED"},
+ {m:"国外",n:"SEA Distributor",ind:"造船",rg:"东南亚",sz:"中型",role:"Distributor",cert:["CE","API 6D"],sig:["海关进口","职位变动"],ct:{name:"Wei Lin",title:"MD",email:"wei@distributor-g.sg",im:"linkedin.com/in/weilin",imType:"linkedin"},act:"海关命中 + 职位变动暖推荐"},
+ {m:"国外",n:"Brazil Importer",ind:"冶金",rg:"南美",sz:"中型",role:"Importer",cert:["API 6D","ISO 9001"],sig:["海关进口","RFQ"],ct:{name:"Carlos Silva",title:"Import Mgr",email:"carlos@import-h.br",im:"linkedin.com/in/carlossilva",imType:"linkedin"},act:"海关进口商开发"},
+ {m:"国外",n:"US EPC Energy",ind:"电力",rg:"美国",sz:"大型",role:"EPC",cert:["API 600","防火"],sig:["招标","扩产"],ct:{name:"Sarah King",title:"Procurement",email:"sarah@epc-energy.us",im:"linkedin.com/in/sarahking",imType:"linkedin"},act:"电力 EPC + 扩产"},
+ {m:"国外",n:"EU Valve Wholesaler",ind:"石化",rg:"欧洲",sz:"中型",role:"Distributor",cert:["CE","PED","API 6D"],sig:["海关进口"],ct:{name:"Lukas Wolf",title:"Buyer",email:"lukas@wholesaler-j.de",im:"linkedin.com/in/lukaswolf",imType:"linkedin"},act:"批发分销 + 认证"},
+ {m:"国外",n:"MENA OEM",ind:"油气",rg:"中东",sz:"中型",role:"OEM",cert:["API 6D","ISO 9001"],sig:["官网需求","RFQ"],ct:{name:"Ali Hassan",title:"Sourcing",email:"ali@oem-k.ae",im:"linkedin.com/in/alihassan",imType:"linkedin"},act:"OEM 配套 + RFQ"},
+ {m:"国外",n:"SEA Power Plant",ind:"电力",rg:"东南亚",sz:"大型",role:"采购部",cert:["CE","PED"],sig:["招标"],ct:{name:"Budi Sant",title:"Procurement",email:"budi@powerplant-l.id",im:"linkedin.com/in/budisant",imType:"linkedin"},act:"电厂招标 + PED"},
+ {m:"国外",n:"US Water Distributor",ind:"水处理",rg:"美国",sz:"中型",role:"Distributor",cert:["API 600","ISO 9001"],sig:["海关进口","职位变动"],ct:{name:"Emma Reed",title:"Buyer",email:"emma@waterdist-us.com",im:"linkedin.com/in/emmareed",imType:"linkedin"},act:"海关 + LinkedIn 暖推荐"},
+ {m:"国外",n:"EU Shipbuilder",ind:"造船",rg:"欧洲",sz:"大型",role:"采购部",cert:["CE","API 6D"],sig:["扩产"],ct:{name:"Klaus Berg",title:"Procurement",email:"klaus@shipbuilder-n.de",im:"linkedin.com/in/klausberg",imType:"linkedin"},act:"船厂扩产 + CE"},
+ {m:"国外",n:"SA EPC",ind:"油气",rg:"南美",sz:"大型",role:"EPC",cert:["API 6D","API 600"],sig:["招标","海关进口"],ct:{name:"Diego Lopez",title:"Procurement",email:"diego@epc-o.ar",im:"linkedin.com/in/diegolopez",imType:"linkedin"},act:"南美 EPC + 海关"},
+ {m:"国外",n:"SEA Importer",ind:"石化",rg:"东南亚",sz:"中型",role:"Importer",cert:["API 6D","ISO 9001"],sig:["海关进口","RFQ"],ct:{name:"Nina Tan",title:"Import Mgr",email:"nina@importer-p.sg",im:"linkedin.com/in/ninatan",imType:"linkedin"},act:"进口商开发"},
+ {m:"国外",n:"MENA Water EPC",ind:"水处理",rg:"中东",sz:"大型",role:"EPC",cert:["CE","PED"],sig:["招标","扩产"],ct:{name:"Layla Ali",title:"Procurement",email:"layla@water-epc.ae",im:"linkedin.com/in/laylaali",imType:"linkedin"},act:"水务 EPC + 扩产"},
+ {m:"国外",n:"US Metal OEM",ind:"冶金",rg:"美国",sz:"中型",role:"OEM",cert:["API 600","ISO 9001"],sig:["官网需求"],ct:{name:"Tom Ray",title:"Sourcing",email:"tom@metal-oem.us",im:"linkedin.com/in/tomray",imType:"linkedin"},act:"冶金 OEM 配套"}
+];
+
+/* 信号 → 产出该信号的数据源 */
+const SIG_SRC = {"招标":"bid","海关进口":"customs","扩产":"news","职位变动":"linkedin","RFQ":"alibaba","官网需求":"web"};
+const SIG_W   = {"招标":25,"海关进口":25,"扩产":15,"职位变动":15,"RFQ":12,"官网需求":12};
+
+/* ---------------- 各数据源的"字段投影"：每个源只吐它能拿到的字段 + 名称变体 ---------------- */
+function variant(name, src){
+  switch(src){
+    case 'qcc':      return name + '有限公司';
+    case 'map':      return name + '（本部）';
+    case 'gdb':      return name + ' Co., Ltd.';
+    case 'customs':  return name.toUpperCase();
+    case 'alibaba':  return name + ' Ltd.';
+    case 'bid':      return name + ' ';
+    default:         return name;
+  }
 }
-function toggleFavView(){ favView=!favView; document.getElementById('favToggle').classList.toggle('on',favView); run(); }
-function refreshFavBtns(){ document.querySelectorAll('[data-fav]').forEach(b=>{ const on=isFav(+b.dataset.fav); b.classList.toggle('on',on); b.textContent=on?'★ 已收藏':'☆ 收藏'; }); }
-
-function copy(text,label){ navigator.clipboard.writeText(text).then(()=>toast('已复制'+label)).catch(()=>toast('复制失败，请手动复制')); }
-
-function contactHref(d){
-  const c=d.contact;
-  if(c.email) return 'mailto:'+c.email+'?subject='+encodeURIComponent('关于'+d.ind+'阀门合作')+'&body='+encodeURIComponent('您好 '+c.name+'，我是阀门厂家，看到贵司在'+d.ind+'领域的采购需求，希望提供产品资料与报价，方便沟通吗？');
-  if(c.phone) return 'tel:'+c.phone;
-  if(c.im) return 'https://'+(c.imType==='linkedin'?c.im:c.im);
-  return '#';
+function project(seed, src){
+  const r = {src, rawName:variant(seed.n, src), _truthKey:seed.n};
+  const c = seed.ct;
+  switch(src){
+    case 'qcc':      Object.assign(r,{ind:seed.ind,rg:seed.rg,sz:seed.sz,cert:seed.cert.slice(0,1),
+                                      ct:{phone:c.phone,im:c.im,imType:c.imType}}); break;
+    case 'bid':      Object.assign(r,{ind:seed.ind,rg:seed.rg,role:'采购部',sig:['招标'],
+                                      ct:{name:c.name,title:c.title}}); break;
+    case 'map':      Object.assign(r,{rg:seed.rg,sz:seed.sz,ct:{phone:c.phone}}); break;
+    case 'web':      Object.assign(r,{ind:seed.ind,sig:['官网需求'],cert:seed.cert,
+                                      ct:{email:c.email}}); break;
+    case 'news':     Object.assign(r,{ind:seed.ind,sig:['扩产']}); break;
+    case 'gdb':      Object.assign(r,{ind:seed.ind,rg:seed.rg,sz:seed.sz,cert:seed.cert.slice(0,2)}); break;
+    case 'customs':  Object.assign(r,{rg:seed.rg,sig:['海关进口'],role:seed.role,
+                                      ct:{email:c.email}}); break;
+    case 'linkedin': Object.assign(r,{role:seed.role,sig:seed.sig.includes('职位变动')?['职位变动']:[],
+                                      ct:{name:c.name,title:c.title,im:c.im,imType:c.imType}}); break;
+    case 'alibaba':  Object.assign(r,{sig:['RFQ'],cert:seed.cert,ct:{email:c.email}}); break;
+  }
+  return r;
 }
-function contactAction(d){
-  const h=contactHref(d);
-  if(h==='#'){ toast('暂无可点击联系方式'); return; }
-  window.open(h,'_blank');
+/* 某公司会出现在哪些源里 */
+function sourcesOf(seed){
+  const s = new Set();
+  s.add(seed.m === '国内' ? 'qcc' : 'gdb');
+  if(seed.m === '国外') s.add('linkedin');
+  if(seed.m === '国内' && seed.rg === '本地周边') s.add('map');
+  seed.sig.forEach(g => { if(SIG_SRC[g]) s.add(SIG_SRC[g]); });
+  return [...s];
 }
+/* 生成全部原始记录（含跨源重复） */
+const RAW = [];
+SEED.forEach(seed => sourcesOf(seed).forEach(src => RAW.push(project(seed, src))));
 
-function sel(id){ return [...document.querySelectorAll('#'+id+' .chip.on')].map(e=>e.dataset.v); }
-function bind(id){
-  document.querySelectorAll('#'+id+' .chip').forEach(c=>{
-    c.onclick=()=>{
-      if(id==='market'){ document.querySelectorAll('#'+id+' .chip').forEach(x=>x.classList.remove('on')); c.classList.add('on'); }
-      else c.classList.toggle('on');
-    };
+/* ---------------- 归一化 & 去重合并引擎 ---------------- */
+function normKey(name){
+  return String(name).toLowerCase()
+    .replace(/（本部）|\(本部\)/g,'')
+    .replace(/股份有限公司|有限责任公司|有限公司|集团|公司/g,'')
+    .replace(/co\.?,?\s?ltd\.?|co\s?ltd|,?\s?ltd\.?|inc\.?|gmbh|llc|s\.a\./g,'')
+    .replace(/[\s\.,·、\-_()（）]/g,'')
+    .trim();
+}
+function uniq(a){ return [...new Set(a)]; }
+
+function aggregate(){
+  const enabled = RAW.filter(r => SRC_ON[r.src]);
+  const map = new Map();
+  enabled.forEach(r => {
+    const k = normKey(r.rawName);
+    if(!map.has(k)) map.set(k,{key:k,names:[],srcs:[],ind:null,rg:null,sz:null,role:null,
+                              cert:[],sig:[],ct:{},raws:0});
+    const t = map.get(k);
+    t.raws++;
+    t.names.push(r.rawName.trim());
+    t.srcs.push(r.src);
+    ['ind','rg','sz','role'].forEach(f => { if(!t[f] && r[f]) t[f] = r[f]; });
+    if(r.cert) t.cert = uniq(t.cert.concat(r.cert));
+    if(r.sig)  t.sig  = uniq(t.sig.concat(r.sig));
+    if(r.ct) Object.keys(r.ct).forEach(f => { if(!t.ct[f] && r.ct[f]) t.ct[f] = r.ct[f]; });
+    // 市场 & 建议动作从真值带出（真实系统由行业/地区规则推导）
+    const seed = SEED.find(s => s.n === r._truthKey);
+    t.m = seed.m; t.act = seed.act; t.truth = seed.n;
   });
-}
-['market','industry','region','role','cert','signal'].forEach(bind);
 
-function resetAll(){
-  document.querySelectorAll('.chip.on').forEach(c=>c.classList.remove('on'));
-  document.querySelector('#market .chip').classList.add('on');
-  favView=false; document.getElementById('favToggle').classList.remove('on');
-  run();
+  const list = [...map.values()].map(t => {
+    t.srcs = uniq(t.srcs);
+    // 规范名：取归一化后最短的原始名（最接近工商主体名）
+    t.n = t.names.slice().sort((a,b)=>a.length-b.length)[0];
+    // 联系方式补全服务（增值源）：仅对已发现企业补缺失字段
+    t.enriched = [];
+    if(SRC_ON.enrich){
+      const seed = SEED.find(s => s.n === t.truth);
+      ['phone','email','im','name','title'].forEach(f=>{
+        if(!t.ct[f] && seed.ct[f]){ t.ct[f] = seed.ct[f]; t.enriched.push(f); }
+      });
+      if(t.enriched.includes('im') && !t.ct.imType) t.ct.imType = seed.ct.imType;
+      if(!t.role) t.role = seed.role;
+    }
+    // 多源交叉验证 → 置信度
+    const k = t.srcs.length;
+    t.conf = k>=4 ? 96 : k===3 ? 90 : k===2 ? 78 : 62;
+    t.crossBonus = Math.min((k-1)*8, 24);
+    // 字段完整度
+    const need = ['phone','email','im','name','title'];
+    t.fill = Math.round(need.filter(f=>t.ct[f]).length / need.length * 100);
+    return t;
+  });
+  return {rawCount: enabled.length, merged: list};
 }
+
+/* ---------------- 多租户状态 ---------------- */
+const LS = 'bx3:';
+let TENANT = null;   // {id,email,name,market}
+let ST = {favs:[], icps:[], contacted:{}};
+
+function tkey(f){ return LS + 't:' + TENANT.id + ':' + f; }
+function loadState(){
+  ST.favs      = JSON.parse(localStorage.getItem(tkey('favs'))||'[]');
+  ST.icps      = JSON.parse(localStorage.getItem(tkey('icps'))||'[]');
+  ST.contacted = JSON.parse(localStorage.getItem(tkey('contacted'))||'{}');
+}
+function save(f){ localStorage.setItem(tkey(f), JSON.stringify(ST[f])); }
+
+const PRESET = {
+  'demo@valve-cn.com': {name:'浙江精工阀门 · 国内销售团队', market:'国内'},
+  'demo@valve-ex.com': {name:'宁波阀门出口部 · 外贸团队',   market:'国外'}
+};
+function tenants(){ return JSON.parse(localStorage.getItem(LS+'tenants')||'{}'); }
+function doLogin(email, pwd){
+  email = (email||'').trim().toLowerCase();
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return '请输入正确的邮箱账号';
+  if(!pwd) return '请输入密码';
+  const all = tenants();
+  if(PRESET[email] && pwd !== '123456' && !all[email]) return '演示账号密码为 123456';
+  if(!all[email]){
+    all[email] = {id:'t'+(Object.keys(all).length+1)+'_'+email.split('@')[0].replace(/\W/g,''),
+                  email, pwd,
+                  name: PRESET[email] ? PRESET[email].name : email.split('@')[0]+' · 新租户',
+                  market: PRESET[email] ? PRESET[email].market : '全部',
+                  created: new Date().toISOString().slice(0,10)};
+    localStorage.setItem(LS+'tenants', JSON.stringify(all));
+  } else if(all[email].pwd !== pwd){ return '密码不正确'; }
+  TENANT = all[email];
+  localStorage.setItem(LS+'session', email);
+  return null;
+}
+
+/* ---------------- ICP 表单 ---------------- */
+function sel(id){ return [...document.querySelectorAll('#'+id+' .chip.on')].map(e=>e.dataset.v); }
+function setSel(id, vals){
+  document.querySelectorAll('#'+id+' .chip').forEach(c=>c.classList.toggle('on', vals.includes(c.dataset.v)));
+}
+function currentIcp(){
+  return {market:sel('market')[0]||'全部', ind:sel('industry'), rg:sel('region'),
+          role:sel('role'), cert:sel('cert'), sig:sel('signal')};
+}
+function applyIcp(p){
+  setSel('market',[p.market]); setSel('industry',p.ind); setSel('region',p.rg);
+  setSel('role',p.role); setSel('cert',p.cert); setSel('signal',p.sig);
+}
+
+/* ---------------- 过滤 + 评分 ---------------- */
+let VIEW = [];
+let favView=false, todoView=false;
 
 function run(){
-  const market=sel('market')[0]||'全部';
-  const ind=sel('industry'), rg=sel('region'), role=sel('role'), cert=sel('cert'), sig=sel('signal');
-  let out=[];
-  DATA.forEach(d=>{
-    if(favView && !isFav(d.id)) return;
-    if(market!=='全部' && d.m!==market) return;
-    if(ind.length && !ind.includes(d.ind)) return;
-    if(rg.length && !rg.includes(d.rg)) return;
-    let score=50, reasons=[d.m==='国内'?'国内':'国外','行业:'+d.ind,'地区:'+d.rg];
-    if(role.length && role.includes(d.role)){ score+=15; reasons.push('角色✓'+d.role); }
-    let cm=0; cert.forEach(x=>{ if(d.cert.includes(x)){ cm++; reasons.push('认证✓'+x); } }); if(cm) score+=cm*10;
-    let sm=0; sig.forEach(x=>{ if(d.sig.includes(x)){ sm+=SIG_W[x]; reasons.push('信号✓'+x); } }); score+=sm;
-    out.push({...d,score,reasons});
+  const p = currentIcp();
+  const {rawCount, merged} = aggregate();
+  let out = [];
+  merged.forEach(d=>{
+    if(favView && !ST.favs.includes(d.key)) return;
+    if(todoView && ST.contacted[d.key]) return;
+    if(p.market!=='全部' && d.m!==p.market) return;
+    if(p.ind.length && !p.ind.includes(d.ind)) return;
+    if(p.rg.length  && !p.rg.includes(d.rg))  return;
+    let score = 40, why = ['行业:'+(d.ind||'未知'), '地区:'+(d.rg||'未知')];
+    if(p.role.length && d.role && p.role.includes(d.role)){ score+=15; why.push('角色✓'+d.role); }
+    let cm=0; p.cert.forEach(x=>{ if(d.cert.includes(x)){ cm++; why.push('认证✓'+x); } });
+    score += cm*10;
+    p.sig.forEach(x=>{ if(d.sig.includes(x)){ score+=SIG_W[x]; why.push('信号✓'+x); } });
+    score += d.crossBonus;
+    if(d.crossBonus) why.push(d.srcs.length+'源交叉+'+d.crossBonus);
+    out.push({...d, score, why});
   });
   out.sort((a,b)=>b.score-a.score);
+  VIEW = out;
+  renderPipe(rawCount, merged.length, out.length);
   render(out);
-  document.getElementById('favcnt').textContent=FAVS.length;
 }
+
+function renderPipe(raw, mergedN, hit){
+  const on = SOURCES.filter(s=>SRC_ON[s.id]).length;
+  document.getElementById('pipe').innerHTML =
+    '启用数据源 <b>'+on+'</b> 个 <span class="arw">→</span> 拉取原始记录 <b>'+raw+'</b> 条 '+
+    '<span class="arw">→</span> 归一化去重合并为 <b>'+mergedN+'</b> 家企业（消除重复 <b>'+(raw-mergedN)+'</b> 条）'+
+    '<span class="arw">→</span> ICP 精准命中 <b>'+hit+'</b> 家';
+}
+
+/* ---------------- 渲染 ---------------- */
+const SRC_NM = {}; SOURCES.forEach(s=>SRC_NM[s.id]=s.nm.replace(/（.*?）/g,''));
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
 
 function render(list){
-  document.getElementById('cnt').textContent=list.length;
-  document.getElementById('top').textContent=list.length?list[0].score:'—';
-  document.getElementById('strong').textContent=list.filter(d=>d.sig.includes('招标')||d.sig.includes('海关进口')).length;
-  if(!list.length){ document.getElementById('result').innerHTML='<div class="empty">没有命中的目标客户 —— 试试放宽行业/地区，或仅用采购信号筛选；收藏夹为空时取消「只看收藏」。</div>'; return; }
-  let h='<table><thead><tr><th>客户</th><th>市场</th><th>行业/地区</th><th>规模/角色</th><th>认证</th><th>采购信号</th><th>分</th><th>联系方式 + 操作</th><th>命中理由</th></tr></thead><tbody>';
-  list.forEach(d=>{
-    const c=d.contact;
-    const certs=d.cert.map(x=>'<span class="tag">'+x+'</span>').join('');
-    const sigs=d.sig.map(x=>'<span class="tag s">'+x+'</span>').join('');
-    const why=d.reasons.map(r=>'<span class="tag">'+r+'</span>').join('');
-    let contactHtml='<b>'+c.name+'</b> / '+c.title+'<br>';
-    if(c.phone) contactHtml+='📞 <a class="clink" href="tel:'+c.phone+'">'+c.phone+'</a> <span class="mini" onclick="copy(\''+c.phone+'\',\'电话\')">复制</span><br>';
-    if(c.email) contactHtml+='✉️ <a class="clink" href="mailto:'+c.email+'">'+c.email+'</a> <span class="mini" onclick="copy(\''+c.email+'\',\'邮箱\')">复制</span><br>';
-    if(c.im) contactHtml+=(c.imType==='wechat'?'💬 ':'🔗 ')+c.im+' <span class="mini" onclick="copy(\''+c.im+'\',\''+(c.imType==='wechat'?'微信':'LinkedIn')+'\')">复制</span><br>';
-    const favOn=isFav(d.id);
-    contactHtml+='<div class="act-row">'+
-      '<span class="mini contact" onclick="contactAction(DATA['+d.id+'])">点击联系</span>'+
-      '<span class="mini fav'+(favOn?' on':'')+'" data-fav="'+d.id+'" onclick="toggleFav('+d.id+')">'+(favOn?'★ 已收藏':'☆ 收藏')+'</span>'+
-      '<span class="mini" onclick="copy(\''+contactText(d)+'\',\'完整联系方式\')">复制全部</span>'+
-      '</div>';
-    contactHtml+='<div style="color:var(--brand);margin-top:4px">'+d.act+'</div>';
-    h+='<tr><td><b>'+d.n+'</b></td>'+
-      '<td><span class="mkt '+(d.m==='国内'?'cn':'intl')+'">'+(d.m==='国内'?'国内':'国外')+'</span></td>'+
-      '<td>'+d.ind+' / '+d.rg+'</td><td>'+d.sz+' / '+d.role+'</td><td>'+certs+'</td><td>'+sigs+'</td>'+
-      '<td class="score">'+d.score+'</td><td style="min-width:240px">'+contactHtml+'</td><td style="max-width:220px">'+why+'</td></tr>';
-  });
-  h+='</tbody></table>';
-  document.getElementById('result').innerHTML=h;
-}
-function contactText(d){ const c=d.contact; return [d.n,c.name,c.title,c.phone,c.email,c.im].filter(Boolean).join(' | '); }
+  document.getElementById('cnt').textContent = list.length;
+  document.getElementById('top').textContent = list.length ? list[0].score : '—';
+  document.getElementById('favcnt').textContent = ST.favs.length;
+  document.getElementById('strong').textContent = list.filter(d=>d.sig.includes('招标')||d.sig.includes('海关进口')).length;
+  document.getElementById('multi').textContent  = list.filter(d=>d.srcs.length>=3).length;
 
-function exportCSV(){
-  const tbl=document.querySelector('#result table'); if(!tbl){alert('请先筛选');return;}
-  let rows=[...tbl.querySelectorAll('tr')].map(tr=>[...tr.querySelectorAll('th,td')].map(c=>'"'+c.innerText.replace(/"/g,'""')+'"').join(','));
-  const csv='\uFEFF'+rows.join('\n');
-  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='目标客户清单.csv'; a.click();
+  const box = document.getElementById('result');
+  if(!list.length){
+    box.innerHTML = '<div class="empty">没有命中的目标客户 —— 试试放宽行业/地区、多勾几个数据源，或取消「只看收藏 / 未联系优先」。</div>';
+    return;
+  }
+  box.innerHTML = '<div class="grid">' + list.map(d=>{
+    const c = d.ct, fav = ST.favs.includes(d.key), done = ST.contacted[d.key];
+    const srcs = d.srcs.map(s=>'<span class="tag src">'+esc(SRC_NM[s])+'</span>').join('');
+    const certs= d.cert.map(x=>'<span class="tag">'+esc(x)+'</span>').join('') || '<span class="conf">认证未采集</span>';
+    const sigs = d.sig.map(x=>'<span class="tag s">'+esc(x)+'</span>').join('')  || '<span class="conf">暂无采购信号</span>';
+    const why  = d.why.map(x=>'<span class="tag why">'+esc(x)+'</span>').join('');
+    let ct = '';
+    ct += '<div><b>'+esc(c.name||'联系人待补全')+'</b>'+(c.title?' / '+esc(c.title):'')+'</div>';
+    if(c.phone) ct += '<div>📞 <a class="clink" href="tel:'+esc(c.phone)+'">'+esc(c.phone)+'</a> <span class="mini" data-act="copy" data-v="'+esc(c.phone)+'" data-l="电话">复制</span></div>';
+    if(c.email) ct += '<div>✉️ <a class="clink" href="mailto:'+esc(c.email)+'">'+esc(c.email)+'</a> <span class="mini" data-act="copy" data-v="'+esc(c.email)+'" data-l="邮箱">复制</span></div>';
+    if(c.im)    ct += '<div>'+(c.imType==='linkedin'?'🔗':'💬')+' '+esc(c.im)+' <span class="mini" data-act="copy" data-v="'+esc(c.im)+'" data-l="'+(c.imType==='linkedin'?'LinkedIn':'微信')+'">复制</span></div>';
+    const missing = ['phone','email','im'].filter(f=>!c[f]);
+    if(missing.length) ct += '<div class="miss">⚠ 缺 '+missing.map(f=>({phone:'电话',email:'邮箱',im:'IM'})[f]).join('/')+
+        '（勾选「联系方式补全服务」可补齐）</div>';
+    if(d.enriched.length) ct += '<div class="conf">✅ 补全服务已补：'+d.enriched.map(f=>({phone:'电话',email:'邮箱',im:'IM',name:'联系人',title:'职位'})[f]).join('、')+'</div>';
+
+    return '<div class="cust'+(d.score>=100?' hi':'')+'">'+
+      '<div class="top"><div class="nm">'+esc(d.n)+' <span class="mkt '+(d.m==='国内'?'cn':'intl')+'">'+d.m+'</span></div>'+
+      '<div class="sc">'+d.score+'<small>匹配分</small></div></div>'+
+      '<div class="meta">'+esc(d.ind||'行业未知')+' · '+esc(d.rg||'地区未知')+' · '+esc(d.sz||'规模未知')+' · '+esc(d.role||'角色待补全')+
+      '　<span class="conf">数据完整度 '+d.fill+'%　置信 <b>'+d.conf+'</b></span></div>'+
+      '<div style="margin-bottom:5px"><span class="conf">数据来源（'+d.srcs.length+'）：</span>'+srcs+'</div>'+
+      '<div style="margin-bottom:4px"><span class="conf">认证：</span>'+certs+'</div>'+
+      '<div><span class="conf">采购信号：</span>'+sigs+'</div>'+
+      '<div class="ct">'+ct+
+        '<div class="act-row">'+
+          '<span class="mini contact" data-act="contact" data-k="'+esc(d.key)+'">点击联系</span>'+
+          '<span class="mini fav'+(fav?' on':'')+'" data-act="fav" data-k="'+esc(d.key)+'">'+(fav?'★ 已收藏':'☆ 收藏')+'</span>'+
+          '<span class="mini" data-act="copyAll" data-k="'+esc(d.key)+'">复制全部</span>'+
+          (done?'<span class="done">已联系 '+esc(done)+'</span>':'')+
+        '</div>'+
+      '</div>'+
+      '<div class="act">建议动作：'+esc(d.act)+'</div>'+
+      '<div style="margin-top:6px"><span class="conf">命中理由：</span>'+why+'</div>'+
+    '</div>';
+  }).join('') + '</div>';
 }
 
+/* ---------------- 侧栏渲染 ---------------- */
+function renderSources(){
+  document.getElementById('srcList').innerHTML = SOURCES.map(s=>
+    '<div class="src'+(SRC_ON[s.id]?' on':'')+'" data-act="src" data-id="'+s.id+'">'+
+      '<span class="dot"></span><span class="nm">'+esc(s.nm)+'</span>'+
+      '<span class="st">'+esc(s.mkt)+' · '+esc(s.st)+'</span></div>').join('');
+}
+function renderIcps(){
+  const box = document.getElementById('icpList');
+  if(!ST.icps.length){ box.innerHTML='<div class="conf">还没保存常用 ICP。设好条件后点「保存为常用 ICP」，下次一键复用。</div>'; return; }
+  box.innerHTML = ST.icps.map((p,i)=>
+    '<div class="icp"><span class="nm" data-act="loadIcp" data-i="'+i+'">📌 '+esc(p.name)+'</span>'+
+    '<span class="del" data-act="delIcp" data-i="'+i+'">✕</span></div>').join('');
+}
+
+/* ---------------- 交互动作 ---------------- */
+function find(k){ return VIEW.find(d=>d.key===k) || aggregate().merged.find(d=>d.key===k); }
+function contactText(d){
+  const c=d.ct;
+  return [d.n, c.name, c.title, c.phone, c.email, c.im].filter(Boolean).join(' | ');
+}
+function contactHref(d){
+  const c=d.ct;
+  if(c.email) return 'mailto:'+c.email+'?subject='+encodeURIComponent('关于'+(d.ind||'工业')+'阀门合作')+
+    '&body='+encodeURIComponent('您好 '+(c.name||'')+'，我们是工业阀门制造商，注意到贵司在'+(d.ind||'')+'领域的采购需求，希望提供产品资料与报价，方便沟通吗？');
+  if(c.phone) return 'tel:'+c.phone;
+  if(c.im)    return c.imType==='linkedin' ? 'https://'+c.im : null;
+  return null;
+}
+function markContacted(k){
+  ST.contacted[k] = new Date().toISOString().slice(0,10);
+  save('contacted');
+}
+function copy(text,label){
+  navigator.clipboard.writeText(text).then(()=>toast('已复制'+(label||''))).catch(()=>toast('复制失败，请手动选中复制'));
+}
 let toastTimer;
-function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),1400); }
+function toast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),1500);
+}
+function exportCSV(){
+  if(!VIEW.length){ toast('先筛选出清单再导出'); return; }
+  const head=['公司','市场','行业','地区','规模','角色','匹配分','置信','数据来源','认证','采购信号','联系人','职位','电话','邮箱','IM','建议动作','命中理由','是否已联系'];
+  const rows=[head].concat(VIEW.map(d=>[d.n,d.m,d.ind||'',d.rg||'',d.sz||'',d.role||'',d.score,d.conf,
+    d.srcs.map(s=>SRC_NM[s]).join('/'),d.cert.join('/'),d.sig.join('/'),
+    d.ct.name||'',d.ct.title||'',d.ct.phone||'',d.ct.email||'',d.ct.im||'',d.act,d.why.join(' '),
+    ST.contacted[d.key]||'未联系']));
+  const csv='\uFEFF'+rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='目标客户清单_'+TENANT.id+'_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click(); toast('已导出 '+VIEW.length+' 条');
+}
 
-run();
+/* ---------------- 事件委托 ---------------- */
+document.addEventListener('click', e=>{
+  const el = e.target.closest('[data-act]');
+  // chip 多选/单选
+  const chip = e.target.closest('.chip');
+  if(chip && !el){
+    const box = chip.parentElement.id;
+    if(box==='market'){ chip.parentElement.querySelectorAll('.chip').forEach(x=>x.classList.remove('on')); chip.classList.add('on'); }
+    else chip.classList.toggle('on');
+    run(); return;
+  }
+  if(!el) return;
+  const a = el.dataset.act;
+
+  if(a==='login'){
+    const err = doLogin(document.getElementById('lu').value, document.getElementById('lp').value);
+    if(err){ document.getElementById('lerr').textContent = err; return; }
+    enterApp(); return;
+  }
+  if(a==='quick'){
+    document.getElementById('lu').value = el.dataset.u;
+    document.getElementById('lp').value = '123456';
+    const err = doLogin(el.dataset.u,'123456');
+    if(err){ document.getElementById('lerr').textContent=err; return; }
+    enterApp(); return;
+  }
+  if(a==='logout'){
+    localStorage.removeItem(LS+'session'); TENANT=null;
+    document.getElementById('app').style.display='none';
+    document.getElementById('login').style.display='flex';
+    document.getElementById('lp').value=''; document.getElementById('lerr').textContent='';
+    return;
+  }
+  if(a==='run'){ run(); toast('已按当前 ICP 重新聚合筛选'); return; }
+  if(a==='reset'){
+    document.querySelectorAll('.chip.on').forEach(c=>c.classList.remove('on'));
+    document.querySelector('#market .chip').classList.add('on');
+    favView=todoView=false;
+    document.getElementById('favToggle').classList.remove('on');
+    document.getElementById('todoToggle').classList.remove('on');
+    run(); return;
+  }
+  if(a==='src'){
+    const id=el.dataset.id; SRC_ON[id]=!SRC_ON[id];
+    renderSources(); run();
+    toast((SRC_ON[id]?'已启用 ':'已停用 ')+SOURCES.find(s=>s.id===id).nm); return;
+  }
+  if(a==='saveIcp'){
+    const p=currentIcp();
+    const auto=[p.market].concat(p.ind,p.rg,p.sig).filter(x=>x&&x!=='全部').slice(0,4).join('/')||'全部客户';
+    const name=prompt('给这个常用 ICP 起个名字：', auto);
+    if(!name) return;
+    ST.icps.push({name, ...p}); save('icps'); renderIcps(); toast('已保存到常用 ICP'); return;
+  }
+  if(a==='loadIcp'){ applyIcp(ST.icps[+el.dataset.i]); run(); toast('已载入：'+ST.icps[+el.dataset.i].name); return; }
+  if(a==='delIcp'){ const n=ST.icps[+el.dataset.i].name; ST.icps.splice(+el.dataset.i,1); save('icps'); renderIcps(); toast('已删除 '+n); return; }
+  if(a==='favView'){ favView=!favView; el.classList.toggle('on',favView); run(); return; }
+  if(a==='todoView'){ todoView=!todoView; el.classList.toggle('on',todoView); run(); return; }
+  if(a==='csv'){ exportCSV(); return; }
+  if(a==='copy'){ copy(el.dataset.v, el.dataset.l); return; }
+  if(a==='copyAll'){ const d=find(el.dataset.k); copy(contactText(d),'完整联系方式'); return; }
+  if(a==='fav'){
+    const k=el.dataset.k;
+    if(ST.favs.includes(k)) ST.favs=ST.favs.filter(x=>x!==k); else ST.favs.push(k);
+    save('favs'); run(); toast(ST.favs.includes(k)?'已收藏到「我的收藏」':'已取消收藏'); return;
+  }
+  if(a==='contact'){
+    const d=find(el.dataset.k), h=contactHref(d);
+    markContacted(d.key);
+    if(!h){ toast('暂无可直接点击的联系方式，请先用补全服务'); run(); return; }
+    window.open(h,'_blank'); run();
+    toast(h.startsWith('mailto')?'已打开邮件（含开场话术）':h.startsWith('tel')?'已唤起拨号':'已打开 LinkedIn');
+    return;
+  }
+});
+document.getElementById('lp').addEventListener('keydown',e=>{ if(e.key==='Enter') document.querySelector('[data-act="login"]').click(); });
+
+/* ---------------- 进入应用 ---------------- */
+function enterApp(){
+  loadState();
+  document.getElementById('login').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('tname').textContent = TENANT.name;
+  document.getElementById('tenantNote').innerHTML =
+    '当前租户 <b>'+esc(TENANT.name)+'</b>（'+esc(TENANT.email)+'，租户 ID '+esc(TENANT.id)+'）。'+
+    '收藏 '+ST.favs.length+' 条 · 常用 ICP '+ST.icps.length+' 个 · 已联系 '+Object.keys(ST.contacted).length+' 家 —— '+
+    '这些数据只属于本租户，换账号登录不可见（真实版由后端按 tenant_id 行级隔离）。';
+  if(TENANT.market && TENANT.market!=='全部') setSel('market',[TENANT.market]);
+  renderSources(); renderIcps(); run();
+}
+/* 会话恢复 */
+(function(){
+  const s = localStorage.getItem(LS+'session'), all = tenants();
+  if(s && all[s]){ TENANT = all[s]; enterApp(); }
+})();
 </script>
 </body>
-html>
+</html>
