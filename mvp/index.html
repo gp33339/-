@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>靶心 · 工业 B2B 目标客户精准发现（MVP 原型）</title>
+<style>
+  :root{ --bg:#f6f8fb; --card:#fff; --line:#e3e8ef; --txt:#1f2933; --sub:#66727f;
+         --brand:#2563eb; --brand2:#0ea5a4; --ok:#16a34a; --warn:#d97706; }
+  *{box-sizing:border-box;font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;}
+  body{margin:0;background:var(--bg);color:var(--txt);font-size:14px;}
+  header{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#fff;padding:18px 24px;}
+  header h1{margin:0;font-size:20px;}
+  header p{margin:6px 0 0;opacity:.9;font-size:13px;}
+  .wrap{display:flex;gap:16px;padding:16px;align-items:flex-start;}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;}
+  .left{width:320px;flex:0 0 320px;position:sticky;top:16px;}
+  .right{flex:1;min-width:0;}
+  h3{margin:0 0 10px;font-size:15px;}
+  .grp{margin-bottom:14px;}
+  .grp label.t{display:block;font-weight:600;margin-bottom:6px;color:var(--sub);font-size:12px;}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;}
+  .chip{border:1px solid var(--line);background:#fff;border-radius:16px;padding:4px 10px;cursor:pointer;font-size:12px;user-select:none;}
+  .chip.on{background:var(--brand);color:#fff;border-color:var(--brand);}
+  .radios{display:flex;gap:8px;}
+  .btn{display:block;width:100%;border:none;border-radius:8px;padding:10px;font-size:14px;cursor:pointer;margin-top:6px;}
+  .btn.primary{background:var(--brand);color:#fff;}
+  .btn.ghost{background:#eef2f7;color:var(--txt);}
+  .stat{display:flex;gap:10px;margin-bottom:12px;}
+  .stat .box{flex:1;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center;}
+  .stat .num{font-size:26px;font-weight:700;color:var(--brand);}
+  .stat .lab{font-size:12px;color:var(--sub);}
+  table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-size:12.5px;}
+  th{background:#f0f4f9;color:var(--sub);position:sticky;top:0;}
+  .score{font-weight:700;color:var(--ok);}
+  .tag{display:inline-block;background:#eef6ff;color:var(--brand);border-radius:4px;padding:1px 6px;margin:1px;font-size:11px;}
+  .tag.s{background:#fef3e2;color:var(--warn);}
+  .mkt{font-size:11px;padding:1px 7px;border-radius:10px;color:#fff;}
+  .mkt.cn{background:#2563eb;} .mkt.intl{background:#0ea5a4;}
+  .empty{padding:30px;text-align:center;color:var(--sub);}
+  code{background:#eef2f7;padding:1px 5px;border-radius:4px;}
+</style>
+</head>
+<body>
+<header>
+  <h1>靶心 · 工业 B2B 目标客户精准发现（MVP 原型）</h1>
+  <p>用户只描述「我要找什么样的客户」，软件从国内外样本库精准过滤 + 评分，交付可跟进的目标客户清单。— 阀门厂参考场景</p>
+</header>
+
+<div class="wrap">
+  <!-- 左侧：用户说要求（ICP） -->
+  <div class="panel left">
+    <h3>① 我要找什么样的客户（ICP）</h3>
+
+    <div class="grp">
+      <label class="t">市场</label>
+      <div class="radios" id="market">
+        <span class="chip on" data-v="全部">全部</span>
+        <span class="chip" data-v="国内">国内 A</span>
+        <span class="chip" data-v="国外">国外 B</span>
+      </div>
+    </div>
+
+    <div class="grp">
+      <label class="t">行业（硬过滤）</label>
+      <div class="chips" id="industry">
+        <span class="chip" data-v="石化">石化</span><span class="chip" data-v="电力">电力</span>
+        <span class="chip" data-v="水处理">水处理</span><span class="chip" data-v="冶金">冶金</span>
+        <span class="chip" data-v="造船">造船</span><span class="chip" data-v="油气">油气</span>
+        <span class="chip" data-v="EPC">EPC</span>
+      </div>
+    </div>
+
+    <div class="grp">
+      <label class="t">地区（硬过滤）</label>
+      <div class="chips" id="region">
+        <span class="chip" data-v="华东">华东</span><span class="chip" data-v="华南">华南</span>
+        <span class="chip" data-v="华北">华北</span><span class="chip" data-v="华中">华中</span>
+        <span class="chip" data-v="本地周边">本地周边</span><span class="chip" data-v="美国">美国</span>
+        <span class="chip" data-v="欧洲">欧洲</span><span class="chip" data-v="东南亚">东南亚</span>
+        <span class="chip" data-v="中东">中东</span><span class="chip" data-v="南美">南美</span>
+      </div>
+    </div>
+
+    <div class="grp">
+      <label class="t">目标角色（加分）</label>
+      <div class="chips" id="role">
+        <span class="chip" data-v="采购部">采购部</span><span class="chip" data-v="技术部">技术部</span>
+        <span class="chip" data-v="老板/工厂主">老板/工厂主</span><span class="chip" data-v="经销商">经销商</span>
+        <span class="chip" data-v="Importer">Importer</span><span class="chip" data-v="Distributor">Distributor</span>
+        <span class="chip" data-v="EPC">EPC</span><span class="chip" data-v="OEM">OEM</span>
+      </div>
+    </div>
+
+    <div class="grp">
+      <label class="t">认证要求（加分）</label>
+      <div class="chips" id="cert">
+        <span class="chip" data-v="API 6D">API 6D</span><span class="chip" data-v="API 600">API 600</span>
+        <span class="chip" data-v="CE">CE</span><span class="chip" data-v="PED">PED</span>
+        <span class="chip" data-v="ISO 9001">ISO 9001</span><span class="chip" data-v="TS">TS</span>
+        <span class="chip" data-v="防火">防火</span><span class="chip" data-v="3A">3A</span>
+      </div>
+    </div>
+
+    <div class="grp">
+      <label class="t">采购信号（加权）</label>
+      <div class="chips" id="signal">
+        <span class="chip" data-v="招标">招标</span><span class="chip" data-v="海关进口">海关进口</span>
+        <span class="chip" data-v="扩产">扩产</span><span class="chip" data-v="职位变动">职位变动</span>
+        <span class="chip" data-v="RFQ">RFQ</span><span class="chip" data-v="官网需求">官网需求</span>
+      </div>
+    </div>
+
+    <button class="btn primary" onclick="run()">② 精准筛选并出清单</button>
+    <button class="btn ghost" onclick="resetAll()">清空要求</button>
+  </div>
+
+  <!-- 右侧：交付清单 -->
+  <div class="right">
+    <div class="stat">
+      <div class="box"><div class="num" id="cnt">0</div><div class="lab">精准命中目标客户</div></div>
+      <div class="box"><div class="num" id="top">—</div><div class="lab">最高匹配分</div></div>
+      <div class="box"><div class="num" id="strong">0</div><div class="lab">强购买信号(招标/海关)</div></div>
+    </div>
+    <div style="margin-bottom:10px;">
+      <button class="btn ghost" style="display:inline-block;width:auto;" onclick="exportCSV()">导出清单 CSV</button>
+      <span style="color:var(--sub);font-size:12px;margin-left:8px;">分数 = 硬命中基础分 + 角色 + 认证 + 采购信号加权；降序排列</span>
+    </div>
+    <div id="result"></div>
+  </div>
+</div>
+
+<script>
+// 样本目标客户库（国内 18 + 国外 18），均为演示数据
+const DATA = [
+ {m:"国内",n:"中石化某工程公司",ind:"石化",rg:"华东",sz:"大型",role:"采购部",cert:["API 6D","TS","ISO 9001"],sig:["招标","扩产"],c:"张工 / 采购经理 / 138****1201",act:"先投招标跟进 + 发选型手册"},
+ {m:"国内",n:"浙江某阀门经销商",ind:"石化",rg:"华东",sz:"中型",role:"经销商",cert:["TS","ISO 9001"],sig:["RFQ"],c:"王总 / 138****2202",act:"经销商政策 + 样品寄送"},
+ {m:"国内",n:"广东水处理设备厂",ind:"水处理",rg:"华南",sz:"中型",role:"采购部",cert:["ISO 9001","CE"],sig:["招标"],c:"李工 / 137****3303",act:"招标响应 + 技术对接"},
+ {m:"国内",n:"山东电力建设公司",ind:"电力",rg:"华北",sz:"大型",role:"技术部",cert:["API 600","TS"],sig:["招标","职位变动"],c:"赵工 / 139****4404",act:"技术参数确认 + 入合格供方"},
+ {m:"国内",n:"江苏某泵业 OEM",ind:"石化",rg:"华东",sz:"中型",role:"采购部",cert:["API 6D","ISO 9001"],sig:["RFQ","官网需求"],c:"陈工 / 138****5505",act:"配套报价 + 寄样"},
+ {m:"国内",n:"上海某船厂",ind:"造船",rg:"华东",sz:"大型",role:"采购部",cert:["API 6D","CE","防火"],sig:["招标"],c:"周工 / 137****6606",act:"船级社认证对接"},
+ {m:"国内",n:"本地周边某水厂",ind:"水处理",rg:"本地周边",sz:"小型",role:"老板/工厂主",cert:["ISO 9001"],sig:["官网需求"],c:"孙厂长 / 136****7707",act:"老板直连 + 现场拜访"},
+ {m:"国内",n:"河北冶金集团",ind:"冶金",rg:"华北",sz:"大型",role:"技术部",cert:["TS","ISO 9001"],sig:["扩产"],c:"刘工 / 139****8808",act:"扩产配套提前介入"},
+ {m:"国内",n:"华南油气工程",ind:"油气",rg:"华南",sz:"大型",role:"采购部",cert:["API 6D","API 600","TS"],sig:["招标"],c:"吴工 / 138****9909",act:"招标 + 入供应商库"},
+ {m:"国内",n:"华中某阀门贸易",ind:"石化",rg:"华中",sz:"小型",role:"经销商",cert:["TS"],sig:["RFQ"],c:"郑总 / 137****1010",act:"批发价 + 区域代理"},
+ {m:"国内",n:"北京某环保工程EPC",ind:"水处理",rg:"华北",sz:"中型",role:"采购部",cert:["ISO 9001","CE"],sig:["招标","RFQ"],c:"冯工 / 138****1111",act:"EPC 总包配套"},
+ {m:"国内",n:"浙江某石化民企",ind:"石化",rg:"华东",sz:"大型",role:"老板/工厂主",cert:["API 6D","TS"],sig:["扩产","职位变动"],c:"许总 / 139****1212",act:"老板层建联 + 战略供货"},
+ {m:"国内",n:"天津某电厂",ind:"电力",rg:"华北",sz:"大型",role:"技术部",cert:["API 600","TS"],sig:["招标"],c:"韩工 / 138****1313",act:"技术选型 + 招标"},
+ {m:"国内",n:"广东某水处理科技",ind:"水处理",rg:"华南",sz:"中型",role:"采购部",cert:["CE","ISO 9001"],sig:["官网需求"],c:"曹工 / 137****1414",act:"官网需求响应"},
+ {m:"国内",n:"山东某造船厂",ind:"造船",rg:"华东",sz:"大型",role:"采购部",cert:["API 6D","CE"],sig:["扩产"],c:"唐工 / 138****1515",act:"扩产产能锁定"},
+ {m:"国内",n:"华中某冶金设备",ind:"冶金",rg:"华中",sz:"中型",role:"技术部",cert:["TS","ISO 9001"],sig:["RFQ"],c:"邓工 / 139****1616",act:"询盘报价"},
+ {m:"国内",n:"本地周边某机电经销商",ind:"石化",rg:"本地周边",sz:"小型",role:"经销商",cert:["ISO 9001"],sig:["官网需求"],c:"萧总 / 136****1717",act:"本地经销合作"},
+ {m:"国内",n:"华东油气储运",ind:"油气",rg:"华东",sz:"大型",role:"采购部",cert:["API 6D","防火"],sig:["招标","职位变动"],c:"程工 / 138****1818",act:"储运安全认证 + 招标"},
+
+ {m:"国外",n:"US Valve Importer A",ind:"石化",rg:"美国",sz:"中型",role:"Importer",cert:["API 6D","API 600"],sig:["海关进口","RFQ"],c:"John Smith / john@a.com",act:"海关数据命中 + 发目录/样品"},
+ {m:"国外",n:"German Distributor B",ind:"电力",rg:"欧洲",sz:"中型",role:"Distributor",cert:["CE","PED","ISO 9001"],sig:["海关进口"],c:"Hans / hans@b.de",act:"CE/PED 合规 + 分销协议"},
+ {m:"国外",n:"SEA EPC C",ind:"水处理",rg:"东南亚",sz:"大型",role:"EPC",cert:["API 6D","ISO 9001"],sig:["招标","扩产"],c:"Tan / tan@c.sg",act:"EPC 总包 + 本地代理"},
+ {m:"国外",n:"MENA Oil EPC",ind:"油气",rg:"中东",sz:"大型",role:"EPC",cert:["API 6D","API 600","防火"],sig:["海关进口","RFQ"],c:"Omar / omr@d.ae",act:"油气认证 + InMail 开发"},
+ {m:"国外",n:"US Pump OEM",ind:"石化",rg:"美国",sz:"中型",role:"OEM",cert:["API 600","ISO 9001"],sig:["官网需求"],c:"Mike / mike@e.com",act:"OEM 配套报价"},
+ {m:"国外",n:"EU Water Utility",ind:"水处理",rg:"欧洲",sz:"大型",role:"采购部",cert:["CE","PED"],sig:["招标"],c:"Sophie / sophie@f.fr",act:"公用事业招标 + PED"},
+ {m:"国外",n:"SEA Distributor",ind:"造船",rg:"东南亚",sz:"中型",role:"Distributor",cert:["CE","API 6D"],sig:["海关进口","职位变动"],c:"Wei / wei@g.sg",act:"海关命中 + 职位变动暖推荐"},
+ {m:"国外",n:"Brazil Importer",ind:"冶金",rg:"南美",sz:"中型",role:"Importer",cert:["API 6D","ISO 9001"],sig:["海关进口","RFQ"],c:"Carlos / carlos@h.br",act:"海关进口商开发"},
+ {m:"国外",n:"US EPC Energy",ind:"电力",rg:"美国",sz:"大型",role:"EPC",cert:["API 600","防火"],sig:["招标","扩产"],c:"Sarah / sarah@i.us",act:"电力 EPC + 扩产"},
+ {m:"国外",n:"EU Valve Wholesaler",ind:"石化",rg:"欧洲",sz:"中型",role:"Distributor",cert:["CE","PED","API 6D"],sig:["海关进口"],c:"Lukas / lukas@j.de",act:"批发分销 + 认证"},
+ {m:"国外",n:"MENA OEM",ind:"油气",rg:"中东",sz:"中型",role:"OEM",cert:["API 6D","ISO 9001"],sig:["官网需求","RFQ"],c:"Ali / ali@k.ae",act:"OEM 配套 + RFQ"},
+ {m:"国外",n:"SEA Power Plant",ind:"电力",rg:"东南亚",sz:"大型",role:"采购部",cert:["CE","PED"],sig:["招标"],c:"Budi / budi@l.id",act:"电厂招标 + PED"},
+ {m:"国外",n:"US Water Distributor",ind:"水处理",rg:"美国",sz:"中型",role:"Distributor",cert:["API 600","ISO 9001"],sig:["海关进口","职位变动"],c:"Emma / emma@m.us",act:"海关 + LinkedIn 暖推荐"},
+ {m:"国外",n:"EU Shipbuilder",ind:"造船",rg:"欧洲",sz:"大型",role:"采购部",cert:["CE","API 6D"],sig:["扩产"],c:"Klaus / klaus@n.de",act:"船厂扩产 + CE"},
+ {m:"国外",n:"SA EPC",ind:"油气",rg:"南美",sz:"大型",role:"EPC",cert:["API 6D","API 600"],sig:["招标","海关进口"],c:"Diego / diego@o.ar",act:"南美 EPC + 海关"},
+ {m:"国外",n:"SEA Importer",ind:"石化",rg:"东南亚",sz:"中型",role:"Importer",cert:["API 6D","ISO 9001"],sig:["海关进口","RFQ"],c:"Nina / nina@p.sg",act:"进口商开发"},
+ {m:"国外",n:"MENA Water EPC",ind:"水处理",rg:"中东",sz:"大型",role:"EPC",cert:["CE","PED"],sig:["招标","扩产"],c:"Layla / layla@q.ae",act:"水务 EPC + 扩产"},
+ {m:"国外",n:"US Metal OEM",ind:"冶金",rg:"美国",sz:"中型",role:"OEM",cert:["API 600","ISO 9001"],sig:["官网需求"],c:"Tom / tom@r.us",act:"冶金 OEM 配套"}
+];
+
+const SIG_W = {"招标":25,"海关进口":25,"扩产":15,"职位变动":15,"RFQ":12,"官网需求":12};
+
+function sel(id){ return [...document.querySelectorAll('#'+id+' .chip.on')].map(e=>e.dataset.v); }
+function bind(id){
+  document.querySelectorAll('#'+id+' .chip').forEach(c=>{
+    c.onclick=()=>{
+      if(id==='market'){ document.querySelectorAll('#'+id+' .chip').forEach(x=>x.classList.remove('on')); c.classList.add('on'); }
+      else c.classList.toggle('on');
+    };
+  });
+}
+['market','industry','region','role','cert','signal'].forEach(bind);
+
+function resetAll(){
+  document.querySelectorAll('.chip.on').forEach(c=>c.classList.remove('on'));
+  document.querySelector('#market .chip').classList.add('on');
+  run();
+}
+
+function run(){
+  const market=sel('market')[0]||'全部';
+  const ind=sel('industry'), rg=sel('region'), role=sel('role'), cert=sel('cert'), sig=sel('signal');
+  const out=[];
+  DATA.forEach(d=>{
+    // 硬过滤：市场 + 行业 + 地区 必须命中（精准第一道闸）
+    if(market!=='全部' && d.m!==market) return;
+    if(ind.length && !ind.includes(d.ind)) return;
+    if(rg.length && !rg.includes(d.rg)) return;
+    // 软加分
+    let score=50, reasons=[];
+    reasons.push(d.m==='国内'?'国内':'国外'); reasons.push('行业:'+d.ind); reasons.push('地区:'+d.rg);
+    if(role.length && role.includes(d.role)){ score+=15; reasons.push('角色✓'+d.role); }
+    let cm=0; cert.forEach(x=>{ if(d.cert.includes(x)){ cm++; reasons.push('认证✓'+x); } }); if(cm) score+=cm*10;
+    let sm=0; sig.forEach(x=>{ if(d.sig.includes(x)){ sm+=SIG_W[x]; reasons.push('信号✓'+x); } }); score+=sm;
+    if(role.length && !role.includes(d.role)) reasons.push('角色—'+d.role);
+    out.push({...d,score,reasons});
+  });
+  out.sort((a,b)=>b.score-a.score);
+  render(out);
+}
+
+function render(list){
+  document.getElementById('cnt').textContent=list.length;
+  document.getElementById('top').textContent=list.length?list[0].score:'—';
+  document.getElementById('strong').textContent=list.filter(d=>d.sig.includes('招标')||d.sig.includes('海关进口')).length;
+  if(!list.length){ document.getElementById('result').innerHTML='<div class="empty">没有命中的目标客户 —— 试试放宽行业/地区，或仅用采购信号筛选。</div>'; return; }
+  let h='<table><thead><tr><th>客户</th><th>市场</th><th>行业/地区</th><th>规模/角色</th><th>认证</th><th>采购信号</th><th>匹配分</th><th>联系人 / 推荐动作</th><th>命中理由</th></tr></thead><tbody>';
+  list.forEach(d=>{
+    const certs=d.cert.map(c=>'<span class="tag">'+c+'</span>').join('');
+    const sigs=d.sig.map(s=>'<span class="tag s">'+s+'</span>').join('');
+    const why=d.reasons.map(r=>'<span class="tag">'+r+'</span>').join('');
+    h+='<tr><td><b>'+d.n+'</b></td>'+
+       '<td><span class="mkt '+(d.m==='国内'?'cn':'intl')+'">'+(d.m==='国内'?'国内':'国外')+'</span></td>'+
+       '<td>'+d.ind+' / '+d.rg+'</td>'+
+       '<td>'+d.sz+' / '+d.role+'</td>'+
+       '<td>'+certs+'</td>'+
+       '<td>'+sigs+'</td>'+
+       '<td class="score">'+d.score+'</td>'+
+       '<td>'+d.c+'<br><span style="color:var(--brand)">'+d.act+'</span></td>'+
+       '<td style="max-width:230px">'+why+'</td></tr>';
+  });
+  h+='</tbody></table>';
+  document.getElementById('result').innerHTML=h;
+}
+
+function exportCSV(){
+  const tbl=document.querySelector('#result table'); if(!tbl){alert('请先筛选');return;}
+  let rows=[...tbl.querySelectorAll('tr')].map(tr=>[...tr.querySelectorAll('th,td')].map(c=>'"'+c.innerText.replace(/"/g,'""')+'"').join(','));
+  const csv='\uFEFF'+rows.join('\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='目标客户清单.csv'; a.click();
+}
+
+run();
+</script>
+</body>
+html>
